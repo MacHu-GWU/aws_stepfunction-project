@@ -9,10 +9,10 @@ class TestContext:
     def test(self):
         assert len(_context.envs) == 0
         with StateMachine(
-            id="abc",
-            comment="First State Machine",
+            ID="abc",
+            Comment="First State Machine",
         ) as sm:
-            assert sm.id in _context.envs
+            assert sm.ID in _context.envs
 
 
 if __name__ == "__main__":

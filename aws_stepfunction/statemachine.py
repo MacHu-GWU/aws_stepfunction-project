@@ -14,7 +14,7 @@ class Context:
     def register(self, sm: "StateMachine"):
         # for k in sm.
         data = {attr: getattr(sm, attr) for attr in StateMachine._context_managed_attrs}
-        self.envs[sm.id] = data
+        self.envs[sm.ID] = data
 
     def deregister(self, sm: "StateMachine"):
         pass
@@ -24,18 +24,18 @@ _context = Context()
 
 
 class StateMachine(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    comment: str = Field(default="")
-    start_at: str = Field(default="")
-    states: list = Field(default_factory=list)
-    version: str = Field(default="1.0")
-    timeout_seconds: int = Field(default=0)
+    ID: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    Comment: str = Field(default="")
+    StartAt: str = Field(default="")
+    States: list = Field(default_factory=list)
+    Version: str = Field(default="1.0")
+    TimeoutSeconds: int = Field(default=0)
 
     _context_managed_attrs = [
-        "comment",
-        "start_at",
-        "version",
-        "timeout_seconds",
+        "Comment",
+        "StartAt",
+        "Version",
+        "TimeoutSeconds",
     ]
 
     def __enter__(self) -> "StateMachine":
@@ -44,3 +44,39 @@ class StateMachine(BaseModel):
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
         _context.deregister(self)
+
+
+class State(BaseModel):
+    pass
+
+
+class Task(State):
+    pass
+
+
+class Parallel(State):
+    pass
+
+
+class Map(State):
+    pass
+
+
+class Pass(State):
+    pass
+
+
+class Wait(State):
+    pass
+
+
+class Choice(State):
+    pass
+
+
+class Succeeded(State):
+    pass
+
+
+class Fail(State):
+    pass
