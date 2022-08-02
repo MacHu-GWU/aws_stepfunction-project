@@ -28,6 +28,17 @@ class TestContext:
         assert len(_context.queue) == 0
 
 
+class TestStateMachine:
+    def test_pre_serialize_validations(self):
+        with pytest.raises(Exception):
+            sm = StateMachine()
+            sm.serialize()
+
+        with pytest.raises(Exception):
+            sm = StateMachine(StartAt="void")
+            sm.serialize()
+
+
 if __name__ == "__main__":
     basename = os.path.basename(__file__)
     pytest.main([basename, "-s", "--tb=native"])
