@@ -7,6 +7,14 @@ This is based on https://states-language.net/spec.html
 import enum
 
 
+class TopLevelFieldEnum(enum.Enum):
+    States = "States"
+    StartAt = "StartAt"
+    Comment = "Comment"
+    Version = "Version"
+    TimeoutSeconds = "TimeoutSeconds"
+
+
 class StateTypeEnum(enum.Enum):
     Task = "Task"
     Parallel = "Parallel"
@@ -16,14 +24,6 @@ class StateTypeEnum(enum.Enum):
     Choice = "Choice"
     Succeed = "Succeed"
     Fail = "Fail"
-
-
-class TopLevelFieldEnum(enum.Enum):
-    States = "States"
-    StartAt = "StartAt"
-    Comment = "Comment"
-    Version = "Version"
-    TimeoutSeconds = "TimeoutSeconds"
 
 
 class StateFieldEnum(enum.Enum):
