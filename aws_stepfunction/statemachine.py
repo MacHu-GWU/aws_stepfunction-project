@@ -2,22 +2,21 @@
 
 import typing as T
 import uuid
-import dataclasses as dc
 
 from pydantic import BaseModel, Field
 
+from . import constant as C
 
-@dc.dataclass
-class Context:
-    envs: T.Dict[str, T.Dict[str, T.Any]] = dc.field(default_factory=dict)
 
-    def register(self, sm: "StateMachine"):
+class Context(BaseModel):
+    queue: T.List['StateMachine'] = Field(default_factory=list)
+
+    def push(self, sm: "StateMachine"):
         # for k in sm.
-        data = {attr: getattr(sm, attr) for attr in StateMachine._context_managed_attrs}
-        self.envs[sm.ID] = data
+        self.queue.append(sm)
 
-    def deregister(self, sm: "StateMachine"):
-        pass
+    def pop(self, sm: "StateMachine"):
+        self.queue.pop()
 
 
 _context = Context()
@@ -39,19 +38,21 @@ class StateMachine(BaseModel):
     ]
 
     def __enter__(self) -> "StateMachine":
-        _context.register(self)
+        _context.push(self)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        _context.deregister(self)
+        _context.pop(self)
 
 
 class State(BaseModel):
-    pass
+    Type: str = Field()
+    Comment: T.Optional[str] = Field(default="")
 
 
 class Task(State):
-    pass
+    Type: str = Field(default=C.StateTypeEnum.Task)
+    End: str = Field(default=False)
 
 
 class Parallel(State):

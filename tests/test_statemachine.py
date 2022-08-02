@@ -7,12 +7,25 @@ from aws_stepfunction.statemachine import _context, StateMachine
 
 class TestContext:
     def test(self):
-        assert len(_context.envs) == 0
+        assert len(_context.queue) == 0
         with StateMachine(
             ID="abc",
             Comment="First State Machine",
-        ) as sm:
-            assert sm.ID in _context.envs
+        ) as sm1:
+            assert len(_context.queue) == 1
+            assert _context.queue[-1].ID == sm1.ID
+
+            with StateMachine(
+                ID="xyz",
+                Comment="Second State Machine",
+            ) as sm2:
+                assert len(_context.queue) == 2
+                assert _context.queue[-1].ID == sm2.ID
+
+            assert len(_context.queue) == 1
+            assert _context.queue[-1].ID == sm1.ID
+
+        assert len(_context.queue) == 0
 
 
 if __name__ == "__main__":
