@@ -52,6 +52,8 @@
 Welcome to ``aws_stepfunction`` Documentation
 ==============================================================================
 
+This is just a placeholder release:
+
 Documentation for ``aws_stepfunction``.
 
 
