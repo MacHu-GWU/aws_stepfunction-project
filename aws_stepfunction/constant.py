@@ -83,6 +83,10 @@ class CatchFieldEnum(enum.Enum):
     Next = "Next"
 
 
+class TestFieldEnum(enum.Enum):
+    Variable = "Variable"
+
+
 class LogicOperatorEnum(enum.Enum):
     """
     Reference:
@@ -213,42 +217,46 @@ class Enum(enum.Enum):
     Not = LogicOperatorEnum.Not.value
 
     # Test Expression
+    Variable = TestFieldEnum.Variable.value
+
     IsBoolean = TestExpressionEnum.IsBoolean.value
     IsNull = TestExpressionEnum.IsNull.value
     IsNumeric = TestExpressionEnum.IsNumeric.value
     IsPresent = TestExpressionEnum.IsPresent.value
     IsString = TestExpressionEnum.IsString.value
     IsTimestamp = TestExpressionEnum.IsTimestamp.value
+
+    StringMatches = TestExpressionEnum.StringMatches.value
+
     NumericEquals = TestExpressionEnum.NumericEquals.value
     NumericEqualsPath = TestExpressionEnum.NumericEqualsPath.value
     NumericGreaterThan = TestExpressionEnum.NumericGreaterThan.value
+    NumericGreaterThanPath = TestExpressionEnum.NumericGreaterThanPath.value
     NumericGreaterThanEquals = TestExpressionEnum.NumericGreaterThanEquals.value
     NumericGreaterThanEqualsPath = TestExpressionEnum.NumericGreaterThanEqualsPath.value
-    NumericGreaterThanPath = TestExpressionEnum.NumericGreaterThanPath.value
     NumericLessThan = TestExpressionEnum.NumericLessThan.value
+    NumericLessThanPath = TestExpressionEnum.NumericLessThanPath.value
     NumericLessThanEquals = TestExpressionEnum.NumericLessThanEquals.value
     NumericLessThanEqualsPath = TestExpressionEnum.NumericLessThanEqualsPath.value
-    NumericLessThanPath = TestExpressionEnum.NumericLessThanPath.value
     StringEquals = TestExpressionEnum.StringEquals.value
     StringEqualsPath = TestExpressionEnum.StringEqualsPath.value
     StringGreaterThan = TestExpressionEnum.StringGreaterThan.value
+    StringGreaterThanPath = TestExpressionEnum.StringGreaterThanPath.value
     StringGreaterThanEquals = TestExpressionEnum.StringGreaterThanEquals.value
     StringGreaterThanEqualsPath = TestExpressionEnum.StringGreaterThanEqualsPath.value
-    StringGreaterThanPath = TestExpressionEnum.StringGreaterThanPath.value
     StringLessThan = TestExpressionEnum.StringLessThan.value
+    StringLessThanPath = TestExpressionEnum.StringLessThanPath.value
     StringLessThanEquals = TestExpressionEnum.StringLessThanEquals.value
     StringLessThanEqualsPath = TestExpressionEnum.StringLessThanEqualsPath.value
-    StringLessThanPath = TestExpressionEnum.StringLessThanPath.value
-    StringMatches = TestExpressionEnum.StringMatches.value
     BooleanEquals = TestExpressionEnum.BooleanEquals.value
     BooleanEqualsPath = TestExpressionEnum.BooleanEqualsPath.value
     TimestampEquals = TestExpressionEnum.TimestampEquals.value
     TimestampEqualsPath = TestExpressionEnum.TimestampEqualsPath.value
     TimestampGreaterThan = TestExpressionEnum.TimestampGreaterThan.value
+    TimestampGreaterThanPath = TestExpressionEnum.TimestampGreaterThanPath.value
     TimestampGreaterThanEquals = TestExpressionEnum.TimestampGreaterThanEquals.value
     TimestampGreaterThanEqualsPath = TestExpressionEnum.TimestampGreaterThanEqualsPath.value
-    TimestampGreaterThanPath = TestExpressionEnum.TimestampGreaterThanPath.value
     TimestampLessThan = TestExpressionEnum.TimestampLessThan.value
+    TimestampLessThanPath = TestExpressionEnum.TimestampLessThanPath.value
     TimestampLessThanEquals = TestExpressionEnum.TimestampLessThanEquals.value
     TimestampLessThanEqualsPath = TestExpressionEnum.TimestampLessThanEqualsPath.value
-    TimestampLessThanPath = TestExpressionEnum.TimestampLessThanPath.value
