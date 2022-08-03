@@ -70,6 +70,19 @@ class ErrorCodeEnum(enum.Enum):
     IntrinsicFailureError = "States.IntrinsicFailure"
 
 
+class RetryFieldEnum(enum.Enum):
+    ErrorEquals = "ErrorEquals"
+    IntervalSeconds = "IntervalSeconds"
+    BackoffRate = "BackoffRate"
+    MaxAttempts = "MaxAttempts"
+
+
+class CatchFieldEnum(enum.Enum):
+    ErrorEquals = "ErrorEquals"
+    ResultPath = "ResultPath"
+    Next = "Next"
+
+
 class Enum(enum.Enum):
     # Top level field
     States = TopLevelFieldEnum.States.value
@@ -122,4 +135,14 @@ class Enum(enum.Enum):
     BranchFailedError = ErrorCodeEnum.BranchFailedError.value
     NoChoiceMatchedError = ErrorCodeEnum.NoChoiceMatchedError.value
     IntrinsicFailureError = ErrorCodeEnum.IntrinsicFailureError.value
-  
+
+    # Retry field
+    ErrorEquals = RetryFieldEnum.ErrorEquals.value
+    IntervalSeconds = RetryFieldEnum.IntervalSeconds.value
+    BackoffRate = RetryFieldEnum.BackoffRate.value
+    MaxAttempts = RetryFieldEnum.MaxAttempts.value
+
+    # Catch field
+    # ErrorEquals = CatchFieldEnum.ErrorEquals.value
+    # ResultPath = CatchFieldEnum.ResultPath.value
+    # Next = CatchFieldEnum.Next.value
