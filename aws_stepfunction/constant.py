@@ -52,6 +52,24 @@ class ParallelFieldEnum(enum.Enum):
     Branches = "Branches"
 
 
+class ErrorCodeEnum(enum.Enum):
+    """
+    Reference:
+
+    - https://states-language.net/spec.html#appendix-a
+    """
+    AllError = "States.ALL"
+    HeartbeatTimeoutError = "States.HeartbeatTimeout"
+    TimeoutError = "States.Timeout"
+    TaskFailedError = "States.TaskFailed"
+    PermissionsError = "States.Permissions"
+    ResultPathMatchFailureError = "States.ResultPathMatchFailure"
+    ParameterPathFailureError = "States.ParameterPathFailure"
+    BranchFailedError = "States.BranchFailed"
+    NoChoiceMatchedError = "States.NoChoiceMatched"
+    IntrinsicFailureError = "States.IntrinsicFailure"
+
+
 class Enum(enum.Enum):
     # Top level field
     States = TopLevelFieldEnum.States.value
@@ -92,3 +110,16 @@ class Enum(enum.Enum):
 
     # Parallel state field
     Branches = ParallelFieldEnum.Branches.value
+
+    # Error code
+    AllError = ErrorCodeEnum.AllError.value
+    HeartbeatTimeoutError = ErrorCodeEnum.HeartbeatTimeoutError.value
+    TimeoutError = ErrorCodeEnum.TimeoutError.value
+    TaskFailedError = ErrorCodeEnum.TaskFailedError.value
+    PermissionsError = ErrorCodeEnum.PermissionsError.value
+    ResultPathMatchFailureError = ErrorCodeEnum.ResultPathMatchFailureError.value
+    ParameterPathFailureError = ErrorCodeEnum.ParameterPathFailureError.value
+    BranchFailedError = ErrorCodeEnum.BranchFailedError.value
+    NoChoiceMatchedError = ErrorCodeEnum.NoChoiceMatchedError.value
+    IntrinsicFailureError = ErrorCodeEnum.IntrinsicFailureError.value
+  
