@@ -245,7 +245,7 @@ class _HasInputOutput(State):
 
 @attr.s
 class _HasParameters(State):
-    Parameters: T.Optional[str] = attr.ib(default=None)
+    Parameters: T.Dict[str, T.Any] = attr.ib(factory=dict)
 
 
 @attr.s
