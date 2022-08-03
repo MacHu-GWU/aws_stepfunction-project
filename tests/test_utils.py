@@ -10,10 +10,8 @@ def test_short_uuid():
 
 
 def test_is_json_path():
-    with pytest.raises(ValueError):
-        utils.is_json_path("abc")
-
-    utils.is_json_path("$.key")
+    assert utils.is_json_path("$.key")
+    assert utils.is_json_path("abc") is False
 
 
 if __name__ == "__main__":

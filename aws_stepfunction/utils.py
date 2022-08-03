@@ -13,6 +13,5 @@ def short_uuid(n: int = 7) -> str:
     return m.hexdigest()[:n]
 
 
-def is_json_path(path: str):
-    if not path.startswith("$."):
-        raise ValueError
+def is_json_path(path: str) -> bool:
+    return path.startswith("$.")
