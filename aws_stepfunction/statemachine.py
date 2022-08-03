@@ -287,10 +287,10 @@ class _HasRetryCatch(State):
 
 @attr.s
 class Task(
-    _HasNextOrEnd,
     _HasInputOutput,
-    _HasParameters,
+    _HasNextOrEnd,
     _HasResultPath,
+    _HasParameters,
     _HasResultSelector,
     _HasRetryCatch,
 ):
@@ -326,10 +326,10 @@ class Task(
 
 @attr.s
 class Parallel(
-    _HasNextOrEnd,
     _HasInputOutput,
-    _HasParameters,
+    _HasNextOrEnd,
     _HasResultPath,
+    _HasParameters,
     _HasResultSelector,
     _HasRetryCatch,
 ):
@@ -377,14 +377,14 @@ class Map(State):
     pass
 
 
-class Pass(_HasNextOrEnd):
+class Pass(
+    _HasInputOutput,
+    _HasNextOrEnd,
+    _HasResultPath,
+    _HasParameters,
+):
     ID: str = attr.ib(factory=lambda: f"Pass-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Pass.value)
-
-    InputPath: T.Optional[str] = attr.ib(default=None)
-    OutputPath: T.Optional[str] = attr.ib(default=None)
-    ResultPath: T.Optional[str] = attr.ib(default=None)
-    Parameters: T.Optional[str] = attr.ib(default=None)
 
     _key_order = [
         C.Enum.Type.value,
