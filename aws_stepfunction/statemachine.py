@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import typing as T
-import uuid
 from collections import OrderedDict
 
 import attr
@@ -11,6 +10,7 @@ from attr import (
 )
 
 from . import constant as C
+from .utils import short_uuid
 
 
 @attr.s
@@ -61,14 +61,13 @@ class InvalidStartAtError(ValidationError):
 
 @attr.s
 class StateMachine:
-    ID: str = attr.ib(factory=lambda: str(uuid.uuid4()))
+    ID: str = attr.ib(factory=lambda: f"StateMachine-{short_uuid()}")
     StartAt: str = attr.ib(default="")
     Comment: T.Optional[str] = attr.ib(default=None)
-    States: T.List['State'] = attr.ib(factory=list)
+    States: T.OrderedDict[str, 'State'] = attr.ib(factory=OrderedDict)
     Version: T.Optional[str] = attr.ib(default=None)
     TimeoutSeconds: T.Optional[int] = attr.ib(default=None)
 
-    _states_mapper: T.Optional[OrderedDict] = attr.ib(factory=OrderedDict)
     _is_parallel_branch: bool = attr.ib(default=False)
 
     def __enter__(self) -> 'StateMachine':
@@ -79,21 +78,22 @@ class StateMachine:
         _context.pop()
 
     def add_state(self, state: 'State'):
-        if state.ID in self._states_mapper:
+        if state.ID in self.States:
             raise ValueError
         else:
-            self.States.append(state)
-            self._states_mapper[state.ID] = state
+            self.States[state.ID] = state
 
     def set_start_at(self, state: 'State'):
         self.StartAt = state.ID
 
     def pre_serialize_validation(self):
         if not self.StartAt:
-            raise InvalidStartAtError("StartAt cannot be empty string!")
-        if self.StartAt not in self._states_mapper:
             raise InvalidStartAtError(
-                f"StartAt id {self.StartAt!r} is not any of defined State ID"
+                f"StateMachine(ID={self.ID}): 'StartAt' cannot be empty string!"
+            )
+        if self.StartAt not in self.States:
+            raise InvalidStartAtError(
+                f"StateMachine(ID={self.ID}): 'StartAt' id {self.StartAt!r} is not any of defined State ID"
             )
 
     def post_serialize_validation(self, data: dict):
@@ -109,8 +109,8 @@ class StateMachine:
         data = {
             C.TopLevelFieldEnum.StartAt.value: self.StartAt,
             C.TopLevelFieldEnum.States.value: {
-                state.ID: state._serialize()
-                for state in self.States
+                state_id: state._serialize()
+                for state_id, state in self.States.items()
             },
         }
         if self.Comment:
@@ -143,7 +143,7 @@ def _check_next_and_end(state: '_HasNextOrEnd'):
 # ------------------------------------------------------------------------------
 @attr.s
 class State:
-    ID: str = attr.ib(factory=lambda: str(uuid.uuid4()))
+    ID: str = attr.ib(factory=lambda: short_uuid())
     Type: str = attr.ib(default=None)
     Comment: T.Optional[str] = attr.ib(default=None)
 
@@ -183,10 +183,18 @@ class State:
         return new_data
 
 
-def _create_single_machine_from_state(state: 'State') -> 'StateMachine':
+def _create_single_machine_from_state(state: '_HasNextOrEnd') -> 'StateMachine':
     with StateMachine() as sm:
         sm._is_parallel_branch = True
-        return sm
+        sm.add_state(state)
+        sm.set_start_at(state)
+        state.end()
+
+    top_level_sm = _context.current
+    if state.ID in top_level_sm.States:
+        top_level_sm.States.pop(state.ID)
+
+    return sm
 
 
 @attr.s
@@ -197,28 +205,30 @@ class _HasNextOrEnd(State):
     def pre_serialize_validation(self):
         _check_next_and_end(self)
 
-    def next(self, other: 'State') -> T.Union[
+    def next(self, state: 'State') -> T.Union[
         'State',
         '_HasNextOrEnd',
     ]:
-        self.Next = other.ID
+        self.Next = state.ID
         self.End = None
-        return other
+        return state
 
     def parallel(
         self,
-        branches=T.Iterable[T.Union['State', 'StateMachine']],
+        branches=T.Iterable[T.Union['_HasNextOrEnd', 'StateMachine']],
     ) -> 'Parallel':
         sm_list: T.List[StateMachine] = list()
         for item in branches:
-            if isinstance(item, State):
+            if isinstance(item, _HasNextOrEnd):
                 sm = _create_single_machine_from_state(item)
                 sm_list.append(sm)
             elif isinstance(item, StateMachine):
                 sm_list.append(item)
             else:
                 raise TypeError
-        return Parallel(Branches=sm_list)
+        para = Parallel(Branches=sm_list)
+        self.next(para)
+        return para
 
     def end(self):
         self.Next = None
@@ -226,7 +236,38 @@ class _HasNextOrEnd(State):
 
 
 @attr.s
-class Task(_HasNextOrEnd):
+class Retry:
+    ErrorEquals: T.List[str] = attr.ib(factory=None)
+    IntervalSeconds: int = attr.ib(default=None)
+    BackoffRate: int = attr.ib(default=None)
+    MaxAttempts: int = attr.ib(default=None)
+
+
+@attr.s
+class Catch:
+    ErrorEquals: T.List[str] = attr.ib(default=None)
+    ResultPath: str = attr.ib(default=None)
+    Next: str = attr.ib(default=None)
+
+    def next(self, state: 'State') -> T.Union[
+        'State', '_HasNextOrEnd',
+    ]:
+        self.Next = state.ID
+        return state
+
+
+@attr.s
+class _HasRetryCatch(State):
+    Retry: T.Optional[str] = attr.ib(default=None)
+    Catch: T.Optional[str] = attr.ib(default=None)
+
+
+@attr.s
+class Task(
+    _HasNextOrEnd,
+    _HasRetryCatch,
+):
+    ID: str = attr.ib(factory=lambda: f"Task-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Task.value)
 
     Resource: T.Optional[str] = attr.ib(default=None)
@@ -240,17 +281,16 @@ class Task(_HasNextOrEnd):
     ResultPath: T.Optional[str] = attr.ib(default=None)
     Parameters: T.Optional[str] = attr.ib(default=None)
     ResultSelector: T.Optional[str] = attr.ib(default=None)
-    Retry: T.Optional[str] = attr.ib(default=None)
-    Catch: T.Optional[str] = attr.ib(default=None)
 
     _key_order = [
         C.Enum.Type.value,
         C.Enum.Comment.value,
         C.Enum.Resource.value,
-        C.Enum.InputPath.value,
-        C.Enum.OutputPath.value,
         C.Enum.Next.value,
         C.Enum.End.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
         C.Enum.ResultPath.value,
         C.Enum.Parameters.value,
         C.Enum.ResultSelector.value,
@@ -265,8 +305,32 @@ class Task(_HasNextOrEnd):
 
 @attr.s
 class Parallel(_HasNextOrEnd):
+    ID: str = attr.ib(factory=lambda: f"Parallel-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
     Branches: T.List['StateMachine'] = attr.ib(factory=list)
+
+    InputPath: T.Optional[str] = attr.ib(default=None)
+    OutputPath: T.Optional[str] = attr.ib(default=None)
+    ResultPath: T.Optional[str] = attr.ib(default=None)
+    Parameters: T.Optional[str] = attr.ib(default=None)
+    ResultSelector: T.Optional[str] = attr.ib(default=None)
+    Retry: T.Optional[str] = attr.ib(default=None)
+    Catch: T.Optional[str] = attr.ib(default=None)
+
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Branches.value,
+        C.Enum.Next.value,
+        C.Enum.End.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+        C.Enum.ResultPath.value,
+        C.Enum.Parameters.value,
+        C.Enum.ResultSelector.value,
+        C.Enum.Retry.value,
+        C.Enum.Catch.value,
+    ]
 
     def _serialize(
         self,
@@ -293,8 +357,25 @@ class Map(State):
     pass
 
 
-class Pass(State):
-    pass
+class Pass(_HasNextOrEnd):
+    ID: str = attr.ib(factory=lambda: f"Pass-{short_uuid()}")
+    Type: str = attr.ib(default=C.StateTypeEnum.Pass.value)
+
+    InputPath: T.Optional[str] = attr.ib(default=None)
+    OutputPath: T.Optional[str] = attr.ib(default=None)
+    ResultPath: T.Optional[str] = attr.ib(default=None)
+    Parameters: T.Optional[str] = attr.ib(default=None)
+
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Next.value,
+        C.Enum.End.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+        C.Enum.ResultPath.value,
+        C.Enum.Parameters.value,
+    ]
 
 
 class Wait(State):
