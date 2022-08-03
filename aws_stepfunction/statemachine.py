@@ -437,8 +437,19 @@ class Choice(
     ]
 
 
-class Succeeded(State):
-    pass
+class Succeed(
+    _HasInputOutput
+):
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Succeed.value}-{short_uuid()}")
+    Type: str = attr.ib(default=C.StateTypeEnum.Succeed.value)
+
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Comment.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+    ]
 
 
 class Fail(State):
