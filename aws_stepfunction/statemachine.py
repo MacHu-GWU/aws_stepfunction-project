@@ -294,7 +294,7 @@ class Task(
     _HasResultSelector,
     _HasRetryCatch,
 ):
-    ID: str = attr.ib(factory=lambda: f"Task-{short_uuid()}")
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Task.value}-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Task.value)
 
     Resource: T.Optional[str] = attr.ib(default=None)
@@ -334,7 +334,7 @@ class Parallel(
     _HasResultSelector,
     _HasRetryCatch,
 ):
-    ID: str = attr.ib(factory=lambda: f"Parallel-{short_uuid()}")
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Parallel.value}-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
     Branches: T.List['StateMachine'] = attr.ib(factory=list)
 
@@ -386,7 +386,7 @@ class Pass(
     _HasResultPath,
     _HasParameters,
 ):
-    ID: str = attr.ib(factory=lambda: f"Pass-{short_uuid()}")
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Pass.value}-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Pass.value)
 
     _key_order = [
@@ -407,7 +407,7 @@ class Wait(
     _HasInputOutput,
     _HasNextOrEnd,
 ):
-    ID: str = attr.ib(factory=lambda: f"Wait-{short_uuid()}")
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Wait.value}-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Wait.value)
 
     _key_order = [
@@ -422,8 +422,19 @@ class Wait(
     ]
 
 
-class Choice(State):
-    pass
+class Choice(
+    _HasInputOutput
+):
+    ID: str = attr.ib(factory=lambda: f"{C.StateTypeEnum.Choice.value}-{short_uuid()}")
+    Type: str = attr.ib(default=C.StateTypeEnum.Choice.value)
+
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Comment.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+    ]
 
 
 class Succeeded(State):
