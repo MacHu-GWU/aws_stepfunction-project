@@ -254,6 +254,11 @@ class _HasResultPath(State):
 
 
 @attr.s
+class _HasResultSelector(State):
+    ResultSelector: T.Dict[str, T.Any] = attr.ib(factory=dict)
+
+
+@attr.s
 class Retry:
     ErrorEquals: T.List[str] = attr.ib(factory=None)
     IntervalSeconds: int = attr.ib(default=None)
@@ -286,6 +291,7 @@ class Task(
     _HasInputOutput,
     _HasParameters,
     _HasResultPath,
+    _HasResultSelector,
     _HasRetryCatch,
 ):
     ID: str = attr.ib(factory=lambda: f"Task-{short_uuid()}")
@@ -296,8 +302,6 @@ class Task(
     TimeoutSeconds: T.Optional[int] = attr.ib(default=None)
     HeartbeatSecondsPath: T.Optional[str] = attr.ib(default=None)
     HeartbeatSeconds: T.Optional[int] = attr.ib(default=None)
-
-    ResultSelector: T.Optional[str] = attr.ib(default=None)
 
     _key_order = [
         C.Enum.Type.value,
@@ -326,15 +330,12 @@ class Parallel(
     _HasInputOutput,
     _HasParameters,
     _HasResultPath,
+    _HasResultSelector,
     _HasRetryCatch,
 ):
     ID: str = attr.ib(factory=lambda: f"Parallel-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
     Branches: T.List['StateMachine'] = attr.ib(factory=list)
-
-    ResultSelector: T.Optional[str] = attr.ib(default=None)
-    Retry: T.Optional[str] = attr.ib(default=None)
-    Catch: T.Optional[str] = attr.ib(default=None)
 
     _key_order = [
         C.Enum.Type.value,
