@@ -238,6 +238,22 @@ class _HasNextOrEnd(State):
 
 
 @attr.s
+class _HasInputOutput(State):
+    InputPath: T.Optional[str] = attr.ib(default=None)
+    OutputPath: T.Optional[str] = attr.ib(default=None)
+
+
+@attr.s
+class _HasParameters(State):
+    Parameters: T.Optional[str] = attr.ib(default=None)
+
+
+@attr.s
+class _HasResultPath(State):
+    ResultPath: T.Optional[str] = attr.ib(default=None)
+
+
+@attr.s
 class Retry:
     ErrorEquals: T.List[str] = attr.ib(factory=None)
     IntervalSeconds: int = attr.ib(default=None)
@@ -267,6 +283,9 @@ class _HasRetryCatch(State):
 @attr.s
 class Task(
     _HasNextOrEnd,
+    _HasInputOutput,
+    _HasParameters,
+    _HasResultPath,
     _HasRetryCatch,
 ):
     ID: str = attr.ib(factory=lambda: f"Task-{short_uuid()}")
@@ -278,10 +297,6 @@ class Task(
     HeartbeatSecondsPath: T.Optional[str] = attr.ib(default=None)
     HeartbeatSeconds: T.Optional[int] = attr.ib(default=None)
 
-    InputPath: T.Optional[str] = attr.ib(default=None)
-    OutputPath: T.Optional[str] = attr.ib(default=None)
-    ResultPath: T.Optional[str] = attr.ib(default=None)
-    Parameters: T.Optional[str] = attr.ib(default=None)
     ResultSelector: T.Optional[str] = attr.ib(default=None)
 
     _key_order = [
@@ -308,16 +323,15 @@ class Task(
 @attr.s
 class Parallel(
     _HasNextOrEnd,
+    _HasInputOutput,
+    _HasParameters,
+    _HasResultPath,
     _HasRetryCatch,
 ):
     ID: str = attr.ib(factory=lambda: f"Parallel-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
     Branches: T.List['StateMachine'] = attr.ib(factory=list)
 
-    InputPath: T.Optional[str] = attr.ib(default=None)
-    OutputPath: T.Optional[str] = attr.ib(default=None)
-    ResultPath: T.Optional[str] = attr.ib(default=None)
-    Parameters: T.Optional[str] = attr.ib(default=None)
     ResultSelector: T.Optional[str] = attr.ib(default=None)
     Retry: T.Optional[str] = attr.ib(default=None)
     Catch: T.Optional[str] = attr.ib(default=None)
