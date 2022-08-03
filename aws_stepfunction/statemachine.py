@@ -306,6 +306,7 @@ class Task(
     _key_order = [
         C.Enum.Type.value,
         C.Enum.Comment.value,
+
         C.Enum.Resource.value,
         C.Enum.Next.value,
         C.Enum.End.value,
@@ -339,6 +340,8 @@ class Parallel(
 
     _key_order = [
         C.Enum.Type.value,
+        C.Enum.Comment.value,
+
         C.Enum.Branches.value,
         C.Enum.Next.value,
         C.Enum.End.value,
@@ -388,6 +391,8 @@ class Pass(
 
     _key_order = [
         C.Enum.Type.value,
+        C.Enum.Comment.value,
+
         C.Enum.Next.value,
         C.Enum.End.value,
 
@@ -398,8 +403,23 @@ class Pass(
     ]
 
 
-class Wait(State):
-    pass
+class Wait(
+    _HasInputOutput,
+    _HasNextOrEnd,
+):
+    ID: str = attr.ib(factory=lambda: f"Wait-{short_uuid()}")
+    Type: str = attr.ib(default=C.StateTypeEnum.Wait.value)
+
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Comment.value,
+
+        C.Enum.Next.value,
+        C.Enum.End.value,
+
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+    ]
 
 
 class Choice(State):
