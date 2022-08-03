@@ -15,14 +15,18 @@ from . import constant as C
 
 @attr.s
 class Context:
-    queue: T.List['StateMachine'] = attr.ib(factory=list)
+    stack: T.List['StateMachine'] = attr.ib(factory=list)
 
-    def push(self, sm: "StateMachine"):
+    def push(self, sm: 'StateMachine'):
         # for k in sm.
-        self.queue.append(sm)
+        self.stack.append(sm)
 
-    def pop(self, sm: "StateMachine"):
-        self.queue.pop()
+    def pop(self) -> 'StateMachine':
+        return self.stack.pop()
+
+    @property
+    def current(self) -> 'StateMachine':
+        return self.stack[-1]
 
 
 _context = Context()
@@ -60,18 +64,19 @@ class StateMachine:
     ID: str = attr.ib(factory=lambda: str(uuid.uuid4()))
     StartAt: str = attr.ib(default="")
     Comment: T.Optional[str] = attr.ib(default=None)
-    States: list = attr.ib(factory=list)
+    States: T.List['State'] = attr.ib(factory=list)
     Version: T.Optional[str] = attr.ib(default=None)
     TimeoutSeconds: T.Optional[int] = attr.ib(default=None)
 
     _states_mapper: T.Optional[OrderedDict] = attr.ib(factory=OrderedDict)
+    _is_parallel_branch: bool = attr.ib(default=False)
 
-    def __enter__(self) -> "StateMachine":
+    def __enter__(self) -> 'StateMachine':
         _context.push(self)
         return self
 
     def __exit__(self, exc_type, exc_value, exc_traceback):
-        _context.pop(self)
+        _context.pop()
 
     def add_state(self, state: 'State'):
         if state.ID in self._states_mapper:
@@ -79,6 +84,9 @@ class StateMachine:
         else:
             self.States.append(state)
             self._states_mapper[state.ID] = state
+
+    def set_start_at(self, state: 'State'):
+        self.StartAt = state.ID
 
     def pre_serialize_validation(self):
         if not self.StartAt:
@@ -93,54 +101,140 @@ class StateMachine:
 
     def serialize(
         self,
-        skip_pre_validation=False,
-        skip_post_validation=False,
+        do_pre_validation=True,
+        do_post_validation=True,
     ) -> dict:
-        if skip_pre_validation is False:
+        if do_pre_validation:
             self.pre_serialize_validation()
+        data = {
+            C.TopLevelFieldEnum.StartAt.value: self.StartAt,
+            C.TopLevelFieldEnum.States.value: {
+                state.ID: state._serialize()
+                for state in self.States
+            },
+        }
+        if self.Comment:
+            data[C.TopLevelFieldEnum.Comment] = self.Comment
+        if self.Version:
+            data[C.TopLevelFieldEnum.Version] = self.Version
+        if self.Version:
+            data[C.TopLevelFieldEnum.TimeoutSeconds] = self.TimeoutSeconds
+        if do_post_validation:
+            self.post_serialize_validation(data)
+        return data
+
+
+# ------------------------------------------------------------------------------
+# State Related Validators
+# ------------------------------------------------------------------------------
+def _check_next_and_end(state: '_HasNextOrEnd'):
+    if state.End is True:
+        if state.Next:
+            # when "End" is True, you can NOT have "Next"
+            raise ValueError
+    else:
+        if not state.Next:
+            # when "End" is not True, you HAVE TO have "Next"
+            raise ValueError
+
+
+# ------------------------------------------------------------------------------
+# State Data Model
+# ------------------------------------------------------------------------------
+@attr.s
+class State:
+    ID: str = attr.ib(factory=lambda: str(uuid.uuid4()))
+    Type: str = attr.ib(default=None)
+    Comment: T.Optional[str] = attr.ib(default=None)
+
+    _key_order: T.List[str] = []
+
+    def __attrs_post_init__(self):
+        if len(_context.stack):
+            sm = _context.stack[-1]
+            sm.add_state(self)
+
+    def _pre_serialize_validation(self):
+        pass
+
+    def _post_serialize_validation(self, data: dict):
+        pass
+
+    @classmethod
+    def _reorder(cls, data: dict) -> dict:
+        ordered_data = dict()
+        for key in cls._key_order:
+            if key in data:
+                ordered_data[key] = data[key]
+        return ordered_data
+
+    def _serialize(
+        self,
+        do_pre_validation=True,
+        do_post_validation=True,
+    ) -> dict:
+        if do_pre_validation:
+            self._pre_serialize_validation()
         data = _to_dict(self)
         data.pop("ID")
-        data.pop("_states_mapper")
-        if skip_post_validation is False:
-            self.post_serialize_validation(data)
-        return data
+        new_data = self._reorder(data)
+        if do_post_validation:
+            self._post_serialize_validation(new_data)
+        return new_data
 
 
-class State:
-    Type: str = attr.ib()
-    ID: str = attr.ib(factory=lambda: str(uuid.uuid4()))
-    Comment: T.Optional[str] = attr.ib(default="")
+def _create_single_machine_from_state(state: 'State') -> 'StateMachine':
+    with StateMachine() as sm:
+        sm._is_parallel_branch = True
+        return sm
+
+
+@attr.s
+class _HasNextOrEnd(State):
+    Next: T.Optional[str] = attr.ib(default=None)
+    End: T.Optional[bool] = attr.ib(default=None)
 
     def pre_serialize_validation(self):
-        pass
+        _check_next_and_end(self)
 
-    def post_serialize_validation(self, data: dict):
-        pass
+    def next(self, other: 'State') -> T.Union[
+        'State',
+        '_HasNextOrEnd',
+    ]:
+        self.Next = other.ID
+        self.End = None
+        return other
 
-    def serialize(
+    def parallel(
         self,
-        skip_pre_validation=False,
-        skip_post_validation=False,
-    ) -> dict:
-        if skip_pre_validation:
-            self.pre_serialize_validation()
-        data = _to_dict(self)
-        if skip_post_validation:
-            self.post_serialize_validation(data)
-        return data
+        branches=T.Iterable[T.Union['State', 'StateMachine']],
+    ) -> 'Parallel':
+        sm_list: T.List[StateMachine] = list()
+        for item in branches:
+            if isinstance(item, State):
+                sm = _create_single_machine_from_state(item)
+                sm_list.append(sm)
+            elif isinstance(item, StateMachine):
+                sm_list.append(item)
+            else:
+                raise TypeError
+        return Parallel(Branches=sm_list)
+
+    def end(self):
+        self.Next = None
+        self.End = True
 
 
-class Task(State):
-    Type: str = attr.ib(default=C.StateTypeEnum.Task)
+@attr.s
+class Task(_HasNextOrEnd):
+    Type: str = attr.ib(default=C.StateTypeEnum.Task.value)
 
-    Resource: str = attr.ib()
+    Resource: T.Optional[str] = attr.ib(default=None)
     TimeoutSecondsPath: T.Optional[str] = attr.ib(default=None)
     TimeoutSeconds: T.Optional[int] = attr.ib(default=None)
     HeartbeatSecondsPath: T.Optional[str] = attr.ib(default=None)
     HeartbeatSeconds: T.Optional[int] = attr.ib(default=None)
 
-    Next: T.Optional[str] = attr.ib(default=None)
-    End: T.Optional[bool] = attr.ib(default=False)
     InputPath: T.Optional[str] = attr.ib(default=None)
     OutputPath: T.Optional[str] = attr.ib(default=None)
     ResultPath: T.Optional[str] = attr.ib(default=None)
@@ -149,12 +243,50 @@ class Task(State):
     Retry: T.Optional[str] = attr.ib(default=None)
     Catch: T.Optional[str] = attr.ib(default=None)
 
+    _key_order = [
+        C.Enum.Type.value,
+        C.Enum.Comment.value,
+        C.Enum.Resource.value,
+        C.Enum.InputPath.value,
+        C.Enum.OutputPath.value,
+        C.Enum.Next.value,
+        C.Enum.End.value,
+        C.Enum.ResultPath.value,
+        C.Enum.Parameters.value,
+        C.Enum.ResultSelector.value,
+        C.Enum.Retry.value,
+        C.Enum.Catch.value,
+        C.Enum.TimeoutSecondsPath.value,
+        C.Enum.TimeoutSeconds.value,
+        C.Enum.HeartbeatSecondsPath.value,
+        C.Enum.HeartbeatSeconds.value,
+    ]
 
-# Task()
 
+@attr.s
+class Parallel(_HasNextOrEnd):
+    Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
+    Branches: T.List['StateMachine'] = attr.ib(factory=list)
 
-class Parallel(State):
-    pass
+    def _serialize(
+        self,
+        do_pre_validation=True,
+        do_post_validation=True,
+    ) -> dict:
+        if do_pre_validation:
+            self.pre_serialize_validation()
+        data = _to_dict(self)
+        data.pop("ID")
+
+        branches = list()
+        for sm in self.Branches:
+            dct = sm.serialize()
+            branches.append(dct)
+        data[C.Enum.Branches.value] = branches
+
+        if do_post_validation:
+            self._post_serialize_validation(data)
+        return data
 
 
 class Map(State):
@@ -179,3 +311,10 @@ class Succeeded(State):
 
 class Fail(State):
     pass
+
+
+class _End:
+    pass
+
+
+END = _End()

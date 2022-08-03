@@ -7,25 +7,36 @@ from aws_stepfunction.statemachine import _context, StateMachine
 
 class TestContext:
     def test(self):
-        assert len(_context.queue) == 0
+        # at begin we got nothing in context queue
+        assert len(_context.stack) == 0
         with StateMachine(
-            ID="abc",
+            ID="sm1",
             Comment="First State Machine",
         ) as sm1:
-            assert len(_context.queue) == 1
-            assert _context.queue[-1].ID == sm1.ID
+            assert len(_context.stack) == 1
+            assert _context.current.ID == sm1.ID
 
             with StateMachine(
-                ID="xyz",
+                ID="sm2",
                 Comment="Second State Machine",
             ) as sm2:
-                assert len(_context.queue) == 2
-                assert _context.queue[-1].ID == sm2.ID
+                assert len(_context.stack) == 2
+                assert _context.current.ID == sm2.ID
 
-            assert len(_context.queue) == 1
-            assert _context.queue[-1].ID == sm1.ID
+            assert len(_context.stack) == 1
+            assert _context.current.ID == sm1.ID
 
-        assert len(_context.queue) == 0
+            with StateMachine(
+                ID="sm3",
+                Comment="Third State Machine",
+            ) as sm3:
+                assert len(_context.stack) == 2
+                assert _context.current.ID == sm3.ID
+
+            assert len(_context.stack) == 1
+            assert _context.current.ID == sm1.ID
+
+        assert len(_context.stack) == 0
 
 
 class TestStateMachine:
