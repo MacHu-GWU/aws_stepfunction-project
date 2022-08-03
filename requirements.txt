@@ -1,2 +1,2 @@
-pydantic
-attrs
+attrs>=21.1.0
+sentinel>=1.0.0

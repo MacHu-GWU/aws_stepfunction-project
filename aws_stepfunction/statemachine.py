@@ -6,7 +6,6 @@ from collections import OrderedDict
 import attr
 from attr import (
     validators as vs,
-    NOTHING,
 )
 
 from . import constant as C
@@ -33,11 +32,14 @@ _context = Context()
 
 
 def _to_dict(inst):
-    return {
-        k: v
-        for k, v in attr.asdict(inst).items()
-        if v is not None
-    }
+    dct = dict()
+    for k, v in attr.asdict(inst).items():
+        if isinstance(v, (list, dict)):
+            if len(v):
+                dct[k] = v
+        elif v is not None:
+            dct[k] = v
+    return dct
 
 
 # ------------------------------------------------------------------------------
@@ -258,8 +260,8 @@ class Catch:
 
 @attr.s
 class _HasRetryCatch(State):
-    Retry: T.Optional[str] = attr.ib(default=None)
-    Catch: T.Optional[str] = attr.ib(default=None)
+    Retry: T.List['Retry'] = attr.ib(factory=list)
+    Catch: T.List['Catch'] = attr.ib(factory=list)
 
 
 @attr.s
@@ -304,7 +306,10 @@ class Task(
 
 
 @attr.s
-class Parallel(_HasNextOrEnd):
+class Parallel(
+    _HasNextOrEnd,
+    _HasRetryCatch,
+):
     ID: str = attr.ib(factory=lambda: f"Parallel-{short_uuid()}")
     Type: str = attr.ib(default=C.StateTypeEnum.Parallel.value)
     Branches: T.List['StateMachine'] = attr.ib(factory=list)
