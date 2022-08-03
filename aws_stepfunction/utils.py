@@ -4,10 +4,15 @@ import uuid
 import hashlib
 
 
-def short_uuid(n: str = 7) -> str:
+def short_uuid(n: int = 7) -> str:
     """
     return short uuid.
     """
     m = hashlib.sha1()
     m.update(uuid.uuid4().bytes)
     return m.hexdigest()[:n]
+
+
+def is_json_path(path: str):
+    if not path.startswith("$."):
+        raise ValueError
