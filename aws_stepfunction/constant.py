@@ -4,10 +4,16 @@
 This is based on https://states-language.net/spec.html
 """
 
-import enum
+from enum import Enum
 
 
-class TopLevelFieldEnum(enum.Enum):
+class StringEnum(Enum):
+    @classmethod
+    def contains(cls, value: str) -> bool:
+        return value in cls._value2member_map_
+
+
+class TopLevelFieldEnum(StringEnum):
     States = "States"
     StartAt = "StartAt"
     Comment = "Comment"
@@ -15,7 +21,7 @@ class TopLevelFieldEnum(enum.Enum):
     TimeoutSeconds = "TimeoutSeconds"
 
 
-class StateTypeEnum(enum.Enum):
+class StateTypeEnum(StringEnum):
     Task = "Task"
     Parallel = "Parallel"
     Map = "Map"
@@ -26,7 +32,7 @@ class StateTypeEnum(enum.Enum):
     Fail = "Fail"
 
 
-class StateFieldEnum(enum.Enum):
+class StateFieldEnum(StringEnum):
     Type = "Type"
     Comment = "Comment"
     InputPath = "InputPath"
@@ -40,7 +46,7 @@ class StateFieldEnum(enum.Enum):
     Catch = "Catch"
 
 
-class TaskFieldEnum(enum.Enum):
+class TaskFieldEnum(StringEnum):
     Resource = "Resource"
     TimeoutSecondsPath = "TimeoutSecondsPath"
     TimeoutSeconds = "TimeoutSeconds"
@@ -48,11 +54,11 @@ class TaskFieldEnum(enum.Enum):
     HeartbeatSeconds = "HeartbeatSeconds"
 
 
-class ParallelFieldEnum(enum.Enum):
+class ParallelFieldEnum(StringEnum):
     Branches = "Branches"
 
 
-class ErrorCodeEnum(enum.Enum):
+class ErrorCodeEnum(StringEnum):
     """
     Reference:
 
@@ -70,24 +76,24 @@ class ErrorCodeEnum(enum.Enum):
     IntrinsicFailureError = "States.IntrinsicFailure"
 
 
-class RetryFieldEnum(enum.Enum):
+class RetryFieldEnum(StringEnum):
     ErrorEquals = "ErrorEquals"
     IntervalSeconds = "IntervalSeconds"
     BackoffRate = "BackoffRate"
     MaxAttempts = "MaxAttempts"
 
 
-class CatchFieldEnum(enum.Enum):
+class CatchFieldEnum(StringEnum):
     ErrorEquals = "ErrorEquals"
     ResultPath = "ResultPath"
     Next = "Next"
 
 
-class TestFieldEnum(enum.Enum):
+class TestFieldEnum(StringEnum):
     Variable = "Variable"
 
 
-class LogicOperatorEnum(enum.Enum):
+class LogicOperatorEnum(StringEnum):
     """
     Reference:
 
@@ -99,7 +105,7 @@ class LogicOperatorEnum(enum.Enum):
     Not = "Not"
 
 
-class TestExpressionEnum(enum.Enum):
+class TestExpressionEnum(StringEnum):
     """
     Reference:
 
