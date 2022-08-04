@@ -4,6 +4,7 @@ import typing as T
 
 if T.TYPE_CHECKING:
     from .state_machine import StateMachine
+    from .state import State
 
 
 class ValidationError(Exception):
@@ -44,4 +45,8 @@ class StateValidationError(
     StateError,
     ValidationError,
 ):
-    pass
+    @classmethod
+    def make(cls, state: 'State', msg: str):
+        return cls(
+            f"State(ID={state.ID}): {msg}"
+        )
