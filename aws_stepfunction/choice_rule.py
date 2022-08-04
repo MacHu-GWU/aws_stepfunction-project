@@ -133,149 +133,117 @@ class Var(StepFunctionObject):
 
     def numeric_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.NumericEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.NumericEqualsPath, value)
         return DataTestExpression(self.path, C.NumericEquals, value)
 
     def numeric_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.NumericGreaterThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.NumericGreaterThanPath, value)
         return DataTestExpression(self.path, C.NumericGreaterThan, value)
 
     def numeric_greater_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
+            if value.startswith("$"):
                 return DataTestExpression(
                     self.path, C.NumericGreaterThanEqualsPath, value
                 )
-        return DataTestExpression(
-            self.path, C.NumericGreaterThanEquals, value
-        )
+        return DataTestExpression(self.path, C.NumericGreaterThanEquals, value)
 
     def numeric_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.NumericLessThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.NumericLessThanPath, value)
         return DataTestExpression(self.path, C.NumericLessThan, value)
 
     def numeric_less_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.NumericLessThanEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.NumericLessThanEqualsPath, value)
         return DataTestExpression(self.path, C.NumericLessThanEquals, value)
 
     def string_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.StringEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.StringEqualsPath, value)
         return DataTestExpression(self.path, C.StringEquals, value)
 
     def string_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.StringGreaterThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.StringGreaterThanPath, value)
         return DataTestExpression(self.path, C.StringGreaterThan, value)
 
     def string_greater_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
+            if value.startswith("$"):
                 return DataTestExpression(
                     self.path, C.StringGreaterThanEqualsPath, value
                 )
-        return DataTestExpression(
-            self.path, C.StringGreaterThanEquals, value
-        )
+        return DataTestExpression(self.path, C.StringGreaterThanEquals, value)
 
     def string_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.StringLessThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.StringLessThanPath, value)
         return DataTestExpression(self.path, C.StringLessThan, value)
 
     def string_less_than_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.StringLessThanEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.StringLessThanEqualsPath, value)
         return DataTestExpression(self.path, C.StringLessThanEquals, value)
 
     def boolean_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.BooleanEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.BooleanEqualsPath, value)
         return DataTestExpression(self.path, C.BooleanEquals, value)
 
     def timestamp_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.TimestampEqualsPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.TimestampEqualsPath, value)
         return DataTestExpression(self.path, C.TimestampEquals, value)
 
     def timestamp_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.TimestampGreaterThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.TimestampGreaterThanPath, value)
         return DataTestExpression(self.path, C.TimestampGreaterThan, value)
 
     def timestamp_greater_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
+            if value.startswith("$"):
                 return DataTestExpression(
                     self.path, C.TimestampGreaterThanEqualsPath, value
                 )
-        return DataTestExpression(
-            self.path, C.TimestampGreaterThanEquals, value
-        )
+        return DataTestExpression(self.path, C.TimestampGreaterThanEquals, value)
 
     def timestamp_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
-                return DataTestExpression(
-                    self.path, C.TimestampLessThanPath, value
-                )
+            if value.startswith("$"):
+                return DataTestExpression(self.path, C.TimestampLessThanPath, value)
         return DataTestExpression(self.path, C.TimestampLessThan, value)
 
     def timestamp_less_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
-            if value.startswith("$."):
+            if value.startswith("$"):
                 return DataTestExpression(
                     self.path, C.TimestampLessThanEqualsPath, value
                 )
-        return DataTestExpression(
-            self.path, C.TimestampLessThanEquals, value
-        )
+        return DataTestExpression(self.path, C.TimestampLessThanEquals, value)
 
     def string_matches(self, value: str) -> DataTestExpression:
         return DataTestExpression(self.path, C.StringMatches, value)
