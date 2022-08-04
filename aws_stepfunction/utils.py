@@ -14,4 +14,4 @@ def short_uuid(n: int = 7) -> str:
 
 
 def is_json_path(path: str) -> bool:
-    return path.startswith("$.")
+    return path.startswith("$")
