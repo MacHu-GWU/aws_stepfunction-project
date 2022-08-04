@@ -2,7 +2,8 @@
 
 import os
 import pytest
-from aws_stepfunction.statemachine import _context, StateMachine
+from aws_stepfunction import exc
+from aws_stepfunction.state_machine import _context, StateMachine
 
 
 class TestContext:
@@ -41,11 +42,11 @@ class TestContext:
 
 class TestStateMachine:
     def test_pre_serialize_validations(self):
-        with pytest.raises(Exception):
+        with pytest.raises(exc.StateMachineValidationError):
             sm = StateMachine()
             sm.serialize()
 
-        with pytest.raises(Exception):
+        with pytest.raises(exc.StateMachineValidationError):
             sm = StateMachine(StartAt="void")
             sm.serialize()
 
