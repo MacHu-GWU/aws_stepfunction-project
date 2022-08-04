@@ -58,6 +58,37 @@ class ParallelFieldEnum(StringEnum):
     Branches = "Branches"
 
 
+class MapFieldEnum(StringEnum):
+    Iterator = "Iterator"
+    ItemsPath = "ItemsPath"
+    MaxConcurrency = "MaxConcurrency"
+
+
+class PassFieldEnum(StringEnum):
+    pass
+
+
+class WaitFieldEnum(StringEnum):
+    Seconds = "Seconds"
+    Timestamp = "Timestamp"
+    SecondsPath = "SecondsPath"
+    TimestampPath = "TimestampPath"
+
+
+class ChoiceFieldEnum(StringEnum):
+    Choices = "Choices"
+    Default = "Default"
+
+
+class SucceedFieldEnum(StringEnum):
+    pass
+
+
+class FailFieldEnum(StringEnum):
+    Cause = "Cause"
+    Error = "Error"
+
+
 class ErrorCodeEnum(StringEnum):
     """
     Reference:
@@ -154,14 +185,14 @@ class TestExpressionEnum(StringEnum):
 
 
 class Constant:
-    # Top level field
+    # --- Top level field
     States = TopLevelFieldEnum.States.value
     StartAt = TopLevelFieldEnum.StartAt.value
     Comment = TopLevelFieldEnum.Comment.value
     Version = TopLevelFieldEnum.Version.value
     TimeoutSeconds = TopLevelFieldEnum.TimeoutSeconds.value
 
-    # State type
+    # --- State type
     Task = StateTypeEnum.Task.value
     Parallel = StateTypeEnum.Parallel.value
     Map = StateTypeEnum.Map.value
@@ -171,8 +202,9 @@ class Constant:
     Succeed = StateTypeEnum.Succeed.value
     Fail = StateTypeEnum.Fail.value
 
-    # State field
+    # --- State field
     Type = StateFieldEnum.Type.value
+
     # Comment = StateFieldEnum.Comment.value
     InputPath = StateFieldEnum.InputPath.value
     OutputPath = StateFieldEnum.OutputPath.value
@@ -184,15 +216,38 @@ class Constant:
     Retry = StateFieldEnum.Retry.value
     Catch = StateFieldEnum.Catch.value
 
-    # Task state field
+    # --- Task state field
     Resource = TaskFieldEnum.Resource.value
     TimeoutSecondsPath = TaskFieldEnum.TimeoutSecondsPath.value
     # TimeoutSeconds = TaskFieldEnum.TimeoutSeconds.value
     HeartbeatSecondsPath = TaskFieldEnum.HeartbeatSecondsPath.value
     HeartbeatSeconds = TaskFieldEnum.HeartbeatSeconds.value
 
-    # Parallel state field
+    # --- Parallel state field
     Branches = ParallelFieldEnum.Branches.value
+
+    # --- Map state field
+    Iterator = MapFieldEnum.Iterator.value
+    ItemsPath = MapFieldEnum.ItemsPath.value
+    MaxConcurrency = MapFieldEnum.MaxConcurrency.value
+
+    # --- Pass state field
+
+    # --- Wait state field
+    Seconds = WaitFieldEnum.Seconds.value
+    Timestamp = WaitFieldEnum.Timestamp.value
+    SecondsPath = WaitFieldEnum.SecondsPath.value
+    TimestampPath = WaitFieldEnum.TimestampPath.value
+
+    # --- Choice state field
+    Choices = ChoiceFieldEnum.Choices.value
+    Default = ChoiceFieldEnum.Default.value
+
+    # --- Succeed state field
+
+    # --- Fail state field
+    Cause = FailFieldEnum.Cause.value
+    Error = FailFieldEnum.Error.value
 
     # Error code
     AllError = ErrorCodeEnum.AllError.value
@@ -212,17 +267,17 @@ class Constant:
     BackoffRate = RetryFieldEnum.BackoffRate.value
     MaxAttempts = RetryFieldEnum.MaxAttempts.value
 
-    # Catch field
+    # --- Catch field
     # ErrorEquals = CatchFieldEnum.ErrorEquals.value
     # ResultPath = CatchFieldEnum.ResultPath.value
     # Next = CatchFieldEnum.Next.value
 
-    # Logic Operator
+    # --- Logic Operator
     And = LogicOperatorEnum.And.value
     Or = LogicOperatorEnum.Or.value
     Not = LogicOperatorEnum.Not.value
 
-    # Test Expression
+    # --- Test Expression
     Variable = TestFieldEnum.Variable.value
 
     IsBoolean = TestExpressionEnum.IsBoolean.value
@@ -266,3 +321,5 @@ class Constant:
     TimestampLessThanPath = TestExpressionEnum.TimestampLessThanPath.value
     TimestampLessThanEquals = TestExpressionEnum.TimestampLessThanEquals.value
     TimestampLessThanEqualsPath = TestExpressionEnum.TimestampLessThanEqualsPath.value
+
+    Sep = "____"
