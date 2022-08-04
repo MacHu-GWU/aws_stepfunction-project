@@ -57,7 +57,11 @@ class StateMachine(StepFunctionObject):
 
     def add_state(self, state: 'State'):
         if state.ID in self.States:
-            raise ValueError
+            raise exc.StateMachineError.make(
+                self,
+                f"Cannot add State(ID={state.ID!r}), "
+                f"It is already defined!"
+            )
         else:
             self.States[state.ID] = state
 
@@ -66,13 +70,13 @@ class StateMachine(StepFunctionObject):
 
     def _pre_serialize_validation(self):
         if not self.StartAt:
-            raise exc.StateMachineValidationError(
-                f"StateMachine(ID={self.ID}): "
+            raise exc.StateMachineValidationError.make(
+                self,
                 f"'StartAt' cannot be empty string!"
             )
         if self.StartAt not in self.States:
             raise exc.StateMachineValidationError(
-                f"StateMachine(ID={self.ID}): "
+                self,
                 f"'StartAt' id {self.StartAt!r} is not any of defined State ID"
             )
 
@@ -84,10 +88,14 @@ class StateMachine(StepFunctionObject):
                 for state_id, state in self.States.items()
             },
         }
+        if self._is_parallel_branch is True:
+            return data
+
         if self.Comment:
             data[C.Comment] = self.Comment
         if self.Version:
             data[C.Version] = self.Version
-        if self.Version:
+        if self.TimeoutSeconds:
             data[C.TimeoutSeconds] = self.TimeoutSeconds
+
         return data

@@ -4,46 +4,66 @@ import os
 import pytest
 from rich import print as rprint
 
-from aws_stepfunction.statemachine import StateMachine, Task, Parallel
-from aws_stepfunction import constant as C
+from aws_stepfunction import exc
+from aws_stepfunction.state_machine import StateMachine
+from aws_stepfunction.state import Task, Parallel
+from aws_stepfunction.constant import Constant as C
 
 
 class TestParallel:
-    def test_init(self):
-        with StateMachine() as sm1:
+    # def test_init_directly(self):
+    #     with StateMachine(is_parallel_branch=True) as sm1:
+    #         task21 = Task(ID="task21", Resource="arn")
+    #         task21.end()
+    #         sm1.set_start_at(task21)
+    #
+    #     with StateMachine(is_parallel_branch=True) as sm2:
+    #         task22 = Task(ID="task22", Resource="arn")
+    #         task22.end()
+    #         sm2.set_start_at(task22)
+    #
+    #     para = Parallel(Branches=[sm1, sm2])
+    #
+    #     with pytest.raises(exc.StateValidationError):
+    #         para.serialize()
+    #
+    #     para.end()
+    #     assert para.serialize() == {
+    #         C.Type: C.Parallel,
+    #         C.Branches: [
+    #             {
+    #                 C.StartAt: task21.ID,
+    #                 C.States: {
+    #                     task21.ID: task21.serialize()
+    #                 }
+    #             },
+    #             {
+    #                 C.StartAt: task22.ID,
+    #                 C.States: {
+    #                     task22.ID: task22.serialize()
+    #                 }
+    #             }
+    #         ],
+    #         C.End: True
+    #     }
+
+    def test_init_from_task(self):
+        with StateMachine() as sm:
+            task1 = Task(ID="task1", Resource="arn")
             task21 = Task(ID="task21", Resource="arn")
-            task21.end()
-            sm1.set_start_at(task21)
-
-        with StateMachine() as sm2:
             task22 = Task(ID="task22", Resource="arn")
-            task22.end()
-            sm2.set_start_at(task22)
+            task3 = Task(ID="task3", Resource="arn")
 
-        para = Parallel(Branches=[sm1, sm2])
+            (
+                task1
+                .parallel([task21, task22])
+                .next(task3)
+                .end()
+            )
 
-        with pytest.raises(Exception):
-            para._serialize()
+            sm.set_start_at(task1)
 
-        para.end()
-        assert para._serialize() == {
-            C.Enum.Type.value: C.Enum.Parallel.value,
-            C.Enum.Branches.value: [
-                {
-                    C.Enum.StartAt.value: task21.ID,
-                    C.Enum.States.value: {
-                        task21.ID: task21._serialize()
-                    }
-                },
-                {
-                    C.Enum.StartAt.value: task22.ID,
-                    C.Enum.States.value: {
-                        task22.ID: task22._serialize()
-                    }
-                }
-            ],
-            C.Enum.End.value: True
-        }
+        rprint(sm.serialize())
 
 
 if __name__ == "__main__":
