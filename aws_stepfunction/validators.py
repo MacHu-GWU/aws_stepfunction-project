@@ -1,8 +1,23 @@
 # -*- coding: utf-8 -*-
 
-class Validator:
-    def __init__(self):
-        pass
+import attr
 
-    def __call__(self, inst, attr, value):
-        pass
+from .exc import ValidationError
+from .model import StepFunctionObject
+
+
+@attr.s
+class _IsInstanceValidator:
+    type = attr.ib()
+
+    def __call__(
+        self,
+        inst: StepFunctionObject,
+        attr: str,
+        value,
+    ):
+        if not isinstance(value, self.type):
+            raise ValidationError(
+                f"'{attr}' must be {self.type!r} "
+                f"(got {value!r} that is a {value.__class__!r})."
+            )
