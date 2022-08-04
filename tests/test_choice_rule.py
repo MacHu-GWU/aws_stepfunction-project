@@ -6,7 +6,7 @@ import pytest
 from rich import print as rprint
 from aws_stepfunction import choice_rule as CR
 from aws_stepfunction.constant import Constant as C
-
+from aws_stepfunction.state import Task
 
 class TestLogicOperator:
     def test(self):
@@ -74,13 +74,15 @@ class TestLogicOperator:
         }
 
         # next
-        and_rule.next("Last")
+        task = Task(ID="last task")
+
+        and_rule.next(task)
         assert C.Next in and_rule.serialize()
 
-        or_rule.next("Last")
+        or_rule.next(task)
         assert C.Next in or_rule.serialize()
 
-        not_rule.next("Last")
+        not_rule.next(task)
         assert C.Next in not_rule.serialize()
 
 

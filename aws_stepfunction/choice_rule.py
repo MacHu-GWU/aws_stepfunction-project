@@ -9,6 +9,8 @@ from .constant import Constant as C, TestExpressionEnum
 from .utils import is_json_path
 from .model import StepFunctionObject
 
+if T.TYPE_CHECKING:
+    from .state import StateType
 
 # ------------------------------------------------------------------------------
 # Choice Rule
@@ -29,9 +31,9 @@ class ChoiceRule(StepFunctionObject):
         default=None, validator=vs.optional(vs.instance_of(str))
     )
 
-    def next(self, state: str) -> "ChoiceRule":
-        self.Next = state
-        return self
+    def next(self, state: 'StateType') -> 'StateType':
+        self.Next = state.ID
+        return state
 
 
 # ------------------------------------------------------------------------------
