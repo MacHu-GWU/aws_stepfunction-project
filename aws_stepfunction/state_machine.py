@@ -31,18 +31,6 @@ class Context:
 
 _context = Context()
 
-
-def _to_dict(inst):
-    dct = dict()
-    for k, v in attr.asdict(inst).items():
-        if isinstance(v, (list, dict)):
-            if len(v):
-                dct[k] = v
-        elif v is not None:
-            dct[k] = v
-    return dct
-
-
 # ------------------------------------------------------------------------------
 # StateMachine data model
 # ------------------------------------------------------------------------------
