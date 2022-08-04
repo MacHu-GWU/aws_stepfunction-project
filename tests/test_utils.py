@@ -10,6 +10,7 @@ def test_short_uuid():
 
 
 def test_is_json_path():
+    assert utils.is_json_path("$")
     assert utils.is_json_path("$.key")
     assert utils.is_json_path("abc") is False
 
