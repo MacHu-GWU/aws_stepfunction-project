@@ -76,7 +76,7 @@ class DataTestExpression(ChoiceRule):
 
     @Operator.validator
     def check_operator(self, attribute, value):
-        if self.Operator not in TestExpressionEnum._value2member_map_:
+        if not TestExpressionEnum.contains(self.Operator):
             raise ValueError
 
     def _pre_serialize_validation(self):
