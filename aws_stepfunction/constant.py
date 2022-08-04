@@ -33,6 +33,7 @@ class StateTypeEnum(StringEnum):
 
 
 class StateFieldEnum(StringEnum):
+    ID = "ID"
     Type = "Type"
     Comment = "Comment"
     InputPath = "InputPath"
@@ -203,6 +204,7 @@ class Constant:
     Fail = StateTypeEnum.Fail.value
 
     # --- State field
+    ID = StateFieldEnum.ID.value
     Type = StateFieldEnum.Type.value
 
     # Comment = StateFieldEnum.Comment.value
