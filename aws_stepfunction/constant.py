@@ -147,7 +147,7 @@ class TestExpressionEnum(enum.Enum):
     TimestampLessThanPath = "TimestampLessThanPath"
 
 
-class Enum(enum.Enum):
+class Constant:
     # Top level field
     States = TopLevelFieldEnum.States.value
     StartAt = TopLevelFieldEnum.StartAt.value
