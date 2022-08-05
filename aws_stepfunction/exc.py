@@ -19,7 +19,7 @@ class StateMachineError(Exception):
     @classmethod
     def make(cls, sm: 'StateMachine', msg: str):
         return cls(
-            f"StateMachine(ID={sm.ID}): {msg}"
+            f"StateMachine(id={sm.id}): {msg}"
         )
 
 
@@ -48,5 +48,5 @@ class StateValidationError(
     @classmethod
     def make(cls, state: 'State', msg: str):
         return cls(
-            f"State(ID={state.ID}): {msg}"
+            f"State(id={state.id}): {msg}"
         )
