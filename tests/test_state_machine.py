@@ -6,8 +6,8 @@ import pytest
 from rich import print as rprint
 
 from aws_stepfunction import exc
-from aws_stepfunction.state_machine import _context, StateMachine
-from aws_stepfunction.state import Task
+from aws_stepfunction.state_machine import StateMachine
+from aws_stepfunction.state import Task, Succeed, Fail
 from aws_stepfunction.choice_rule import Var
 
 
@@ -22,6 +22,8 @@ class TestStateMachine:
         t03_b1 = Task(id="T03-b1", resource="arn")
         t03_b2 = Task(id="T03-b2", resource="arn")
         t03_c = Task(id="T03-c", resource="arn")
+        t03_c_succeed = Succeed()
+        t03_c_fail = Fail()
         t04 = Task(id="T04", resource="arn")
         t05_a1 = Task(id="T05-a1", resource="arn")
         t05_a2 = Task(id="T05-a2", resource="arn")
@@ -35,95 +37,73 @@ class TestStateMachine:
 
         (
             sm.start(t01)
-            .next(t02)
+            .next_then(t02)
             .choice([
                 (
-                    Var("$.key").string_equals("v1")
-                    # .next(t03_a1)
-                    # .next(t03_a2)
-                    # .next(t04)
+                    Var("$.key").string_equals("v1").next_then(t03_a1)
                 ),
-                # (
-                #     Var("$.key").string_equals("v2")
-                #     .next(t03_b1)
-                #     .next(t03_b2)
-                #     .next(t04)
-                # ),
-                # (
-                #     Var("$.key").string_equals("v2")
-                #     .next(t03_b1)
-                #     .next(t03_b2)
-                #     .next(t04)
-                # )
+                (
+                    Var("$.key").string_equals("v2").next_then(t03_b1)
+                ),
+                (
+                    Var("$.key").string_equals("v3").next_then(t03_c)
+                ),
             ])
-            # .default_fail()
+            .default_fail()
+        )
+
+        (
+            sm.continue_from(t03_a1)
+            .next_then(t03_a2)
+            .next_then(t04)
+        )
+
+        (
+            sm.continue_from(t03_b1)
+            .next_then(t03_b2)
+            .next_then(t04)
+        )
+
+        (
+            sm.continue_from(t03_c)
+            .choice([
+                Var("$.flag").boolean_equals(True).next_then(t03_c_succeed),
+                Var("$.flag").boolean_equals(False).next_then(t03_c_fail),
+            ])
+        )
+
+        (
+            sm.continue_from(t04)
+            .parallel(
+                branches=[
+                    (
+                        sm.parallel_from(t05_a1)
+                        .next_then(t05_a2)
+                        .end()
+                    ),
+                    (
+                        sm.parallel_from(t05_b1)
+                        .next_then(t05_b2)
+                        .end()
+                    ),
+                ]
+            )
+            .next_then(t06)
+            .wait()
+            .next_then(t07)
+            .map(
+                iterator=(
+                    sm.map_from(t08)
+                    .next_then(t09)
+                    .end()
+                ),
+                items_path="$.items",
+            )
+            .next_then(t10)
             .end()
         )
-        #
-        # (
-        #     sm.continue_from(t04)
-        #     .parallel([
-        #         t05_a1.next(t05_a2).end(),
-        #         t05_b1.next(t05_b2).end(),
-        #     ])
-        #     .next(t06)
-        #     .wait(
-        #         seconds=10,
-        #     )
-        #     .next(t07)
-        #     .map(
-        #         t08.next(t09),
-        #         items_path="$.items",
-        #     )
-        #     .next(t10)
-        #     .end()
-        # )
-
-        rprint(sm.serialize())
-
-# class TestContext:
-#     def test(self):
-#         # at begin we got nothing in context queue
-#         assert len(_context.stack) == 0
-#         with StateMachine(
-#             ID="sm1",
-#             Comment="First State Machine",
-#         ) as sm1:
-#             assert len(_context.stack) == 1
-#             assert _context.current.ID == sm1.ID
-#
-#             with StateMachine(
-#                 ID="sm2",
-#                 Comment="Second State Machine",
-#             ) as sm2:
-#                 assert len(_context.stack) == 2
-#                 assert _context.current.ID == sm2.ID
-#
-#             assert len(_context.stack) == 1
-#             assert _context.current.ID == sm1.ID
-#
-#             with StateMachine(
-#                 ID="sm3",
-#                 Comment="Third State Machine",
-#             ) as sm3:
-#                 assert len(_context.stack) == 2
-#                 assert _context.current.ID == sm3.ID
-#
-#             assert len(_context.stack) == 1
-#             assert _context.current.ID == sm1.ID
-#
-#         assert len(_context.stack) == 0
-#
-#
-# class TestStateMachine:
-#     def test_pre_serialize_validations(self):
-#         with pytest.raises(exc.StateMachineValidationError):
-#             sm = StateMachine()
-#             sm.serialize()
-#
-#         with pytest.raises(exc.StateMachineValidationError):
-#             sm = StateMachine(StartAt="void")
-#             sm.serialize()
+        # rprint(sm._previous_state)
+        # rprint(sm.serialize())
 
 
 if __name__ == "__main__":

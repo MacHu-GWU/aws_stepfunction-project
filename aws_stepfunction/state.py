@@ -478,6 +478,11 @@ class Parallel(
     _HasResultPath,
     _HasRetryCatch,
 ):
+    """
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html
+    """
     id: str = attr.ib(
         factory=lambda: f"{C.Parallel}-{short_uuid()}",
         validator=vs.instance_of(str),
@@ -528,13 +533,12 @@ class Parallel(
 
     def _serialize(self) -> dict:
         data = super()._serialize()
-
+        data = self._serialize_retry_catch_fields(data)
         branches = list()
         for state_machine in self.branches:
             dct = state_machine.serialize()
             branches.append(dct)
         data[C.Branches] = branches
-
         return data
 
 
@@ -598,6 +602,7 @@ class Map(
     def _serialize(self) -> dict:
         data = super()._serialize()
         data = self._serialize_retry_catch_fields(data)
+        data[C.Iterator] = self.iterator.serialize()
         return data
 
 
@@ -734,34 +739,32 @@ class Choice(
 
         self._check_choices()
 
-    def with_default(self, state: 'StateType') -> 'Choice':
-        self.default = state.ID
-        return self
-
     def default_succeed(
         self,
         id: T.Optional[str] = None
     ) -> 'Succeed':
         """
-        TODO: Fail has more argument
         """
         kwargs = dict()
         if id is not None:
             kwargs["id"] = id
         succeed = Succeed(**kwargs)
+        self.default = succeed.id
         return succeed
 
     def default_fail(
         self,
-        id: T.Optional[str] = None
+        id: T.Optional[str] = None,
+        cause: T.Optional[str] = None,
+        error: T.Optional[str] = None,
     ) -> 'Fail':
         """
-        TODO: Fail has more argument
         """
-        kwargs = dict()
+        kwargs = dict(cause=cause, error=error)
         if id is not None:
             kwargs["id"] = id
         fail = Fail(**kwargs)
+        self.default = fail.id
         return fail
 
 
@@ -790,6 +793,7 @@ class Succeed(
         self._check_input_output_path()
 
 
+@attr.s
 class Fail(
     State,
 ):
@@ -801,8 +805,12 @@ class Fail(
         default=C.Fail, metadata={C.ALIAS: C.Type},
     )
 
-    Cause: T.Optional[str] = attr.ib(default=None)
-    Error: T.Optional[str] = attr.ib(default=None)
+    cause: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Cause},
+    )
+    error: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Error},
+    )
 
     _se_order = [
         # common
