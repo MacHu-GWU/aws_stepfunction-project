@@ -48,28 +48,6 @@ class State(StepFunctionObject):
         metadata={C.ALIAS: C.Comment},
     )
 
-    _uuid: T.Optional[str] = attr.ib(default=None)
-
-    # def __attrs_post_init__(self):
-    #     """
-    #     .. code-block:: python
-    #
-    #         # automatically add the task to the state machine
-    #         with StateMachine() as sm:
-    #             task = Task(...)
-    #     """
-    #     self._uuid = self.id
-    #     if len(_context.stack):
-    #         sm = _context.stack[-1]
-    #         sm.add_state(self)
-
-    # @property
-    # def _state_machine_id(self) -> T.Optional[str]:
-    #     if C.Sep in self._uuid:
-    #         return self._uuid.split(C.Sep, 1)[0]
-    #     else:
-    #         return None
-
     def _serialize(self) -> dict:
         data = self.to_dict()
         data = self._to_alias(data)
@@ -92,24 +70,6 @@ class State(StepFunctionObject):
     def _check_opt_json_path(self, attr: str, value: T.Optional[str]):
         if value is not None:
             self._check_json_path(attr, value)
-
-
-# def _create_single_machine_from_state(state: 'StateType') -> 'StateMachine':
-#     """
-#     """
-#     # create a new state machine based on given state
-#     with StateMachine() as new_sm:
-#         new_sm._is_parallel_branch = True
-#         new_sm.add_state(state)
-#         new_sm.set_start_at(state)
-#         state.end()
-#
-#     # un-associate the given state from its old state machine
-#     old_sm = _context.find_state_owner(state)
-#     if old_sm is not None:
-#         old_sm.remove_state(state)
-#
-#     return new_sm
 
 
 @attr.s
@@ -138,64 +98,6 @@ class _HasNextOrEnd(State):
                     f"{C.End!r} is False, "
                     f"but the {C.Next!r} is not defined!"
                 )
-
-    # def next(self, state: 'StateType') -> 'StateType':
-    #     self.Next = state.ID
-    #     self.End = None
-    #     return state
-    #
-    # def parallel(
-    #     self,
-    #     branches: T.Iterable[T.Union['StateType', 'StateMachine']],
-    #     id: T.Optional[str] = None,
-    # ) -> 'Parallel':
-    #     state_machine_list: T.List[StateMachine] = list()
-    #     for item in branches:
-    #         if isinstance(item, _HasNextOrEnd):
-    #             state_machine = _create_single_machine_from_state(item)
-    #             state_machine_list.append(state_machine)
-    #         elif isinstance(item, StateMachine):
-    #             state_machine_list.append(item)
-    #         else:
-    #             raise TypeError
-    #
-    #     kwargs = {C.Branches: state_machine_list}
-    #     if id is not None:
-    #         kwargs[C.ID] = id
-    #
-    #     para = Parallel(**kwargs)
-    #     self.next(para)
-    #     return para
-    #
-    # def map(
-    #     self,
-    #     iterator: T.Union['StateType', 'StateMachine'],
-    #     items_path: T.Optional[str] = None,
-    # ) -> 'Map':
-    #     pass
-    #
-    # def choice(
-    #     self,
-    #     choices: T.Iterable[T.Union['StateType', 'StateMachine']],
-    #     default: T.Optional['StateType'] = None,
-    # ) -> 'Choice':
-    #     pass
-    #
-    # def wait(self, seconds: int) -> 'Wait':
-    #     pass
-    #
-    # def passing(self) -> 'Pass':
-    #     pass
-    #
-    # def succeed(self) -> 'Succeed':
-    #     pass
-    #
-    # def fail(self) -> 'Fail':
-    #     pass
-    #
-    # def end(self):
-    #     self.Next = None
-    #     self.End = True
 
 
 @attr.s
@@ -481,11 +383,58 @@ class Task(
         C.Catch,
     ]
 
+    def update(
+        self,
+        id: T.Optional[str] = None,
+        resource: T.Optional[str] = None,
+        timeout_seconds_path: T.Optional[str] = None,
+        timeout_seconds: T.Optional[int] = None,
+        heartbeat_seconds_path: T.Optional[str] = None,
+        heartbeat_seconds: T.Optional[int] = None,
+        next: T.Optional[str] = None,
+        end: T.Optional[bool] = None,
+        input_path: T.Optional[str] = None,
+        output_path: T.Optional[str] = None,
+        parameters: T.Optional[str] = None,
+        result_selector: T.Optional[str] = None,
+        result_path: T.Optional[str] = None,
+        retry: T.Optional[T.List['Retry']] = None,
+        catch: T.Optional[T.List['Catch']] = None,
+    ):
+        for attr, value in [
+            ("id", id),
+            ("resource", resource),
+            ("timeout_seconds_path", timeout_seconds_path),
+            ("timeout_seconds", timeout_seconds),
+            ("heartbeat_seconds_path", heartbeat_seconds_path),
+            ("heartbeat_seconds", heartbeat_seconds),
+            ("next", next),
+            ("end", end),
+            ("input_path", input_path),
+            ("output_path", output_path),
+            ("parameters", parameters),
+            ("result_selector", result_selector),
+            ("result_path", result_path),
+            ("retry", retry),
+            ("catch", catch),
+        ]:
+            if value is not None:
+                setattr(self, attr, value)
+        return self
+
+    def _check_resource(self):
+        if self.resource is None:
+            raise exc.StateValidationError.make(
+                self,
+                f"{C.Resource!r} is not defined!"
+            )
+
     def _pre_serialize_validation(self):
         self._check_next_and_end()
         self._check_input_output_path()
         self._check_result_path()
 
+        self._check_resource()
         self._check_opt_json_path(C.TimeoutSecondsPath, self.timeout_seconds_path)
         self._check_opt_json_path(C.HeartbeatSecondsPath, self.heartbeat_seconds_path)
 
