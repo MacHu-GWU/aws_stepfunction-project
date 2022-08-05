@@ -74,15 +74,15 @@ class TestLogicOperator:
         }
 
         # next
-        task = Task(ID="last task")
+        task = Task(id="last")
 
-        and_rule.next(task)
+        and_rule.next_then(task)
         assert C.Next in and_rule.serialize()
 
-        or_rule.next(task)
+        or_rule.next_then(task)
         assert C.Next in or_rule.serialize()
 
-        not_rule.next(task)
+        not_rule.next_then(task)
         assert C.Next in not_rule.serialize()
 
 

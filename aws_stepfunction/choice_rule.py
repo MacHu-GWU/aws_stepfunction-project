@@ -26,14 +26,15 @@ class ChoiceRule(StepFunctionObject):
     - https://states-language.net/spec.html#choice-state, search keyword
         "Choice Rule"
     """
-
-    Next: T.Optional[str] = attr.ib(
-        default=None, validator=vs.optional(vs.instance_of(str))
+    next: T.Optional[str] = attr.ib(
+        default=None,
+        validator=vs.optional(vs.instance_of(str)),
+        metadata={C.ALIAS: C.Next},
     )
 
-    def next(self, state: 'StateType') -> 'StateType':
-        self.Next = state.ID
-        return state
+    def next_then(self, state: 'StateType'):
+        self.next = state.id
+        return self
 
 
 # ------------------------------------------------------------------------------
@@ -64,32 +65,31 @@ class DataTestExpression(ChoiceRule):
 
     - https://states-language.net/spec.html#choice-state
     """
-
-    Variable: str = attr.ib(
+    variable: str = attr.ib(
         default="",
         validator=[vs.instance_of(str), _is_json_path],
     )
-    Operator: str = attr.ib(default="")
-    Expected: T.Union[str, T.Any] = attr.ib(default="")
-    Next: T.Optional[str] = attr.ib(
+    operator: str = attr.ib(default="")
+    expected: T.Union[str, T.Any] = attr.ib(default="")
+    next: T.Optional[str] = attr.ib(
         default=None,
         validator=vs.optional(vs.instance_of(str)),
     )
 
-    @Operator.validator
+    @operator.validator
     def check_operator(self, attribute, value):
-        if not TestExpressionEnum.contains(self.Operator):
+        if not TestExpressionEnum.contains(self.operator):
             raise ValueError
 
     def _pre_serialize_validation(self):
-        if self.Operator.endswith("Path"):
-            if not is_json_path(self.Expected):
+        if self.operator.endswith("Path"):
+            if not is_json_path(self.expected):
                 raise ValueError
 
     def _serialize(self) -> dict:
-        data = {C.Variable: self.Variable, self.Operator: self.Expected}
-        if self.Next:
-            data[C.Next] = self.Next
+        data = {C.Variable: self.variable, self.operator: self.expected}
+        if self.next:
+            data[C.Next] = self.next
         return data
 
 
@@ -253,7 +253,6 @@ class Var(StepFunctionObject):
 
 Test = DataTestExpression  # alias of DataTestExpression
 
-
 # ------------------------------------------------------------------------------
 # Boolean expression
 # ------------------------------------------------------------------------------
@@ -267,7 +266,7 @@ class BooleanExpression(ChoiceRule):
 
 @attr.s
 class And(BooleanExpression):
-    Rules: T.List["ChoiceRule"] = attr.ib(factory=list)
+    rules: T.List['ChoiceRule'] = attr.ib(factory=list)
 
     _se_order = [
         C.And,
@@ -275,15 +274,15 @@ class And(BooleanExpression):
     ]
 
     def _serialize(self) -> dict:
-        data = {C.And: [rule.serialize() for rule in self.Rules]}
-        if self.Next:
-            data[C.Next] = self.Next
+        data = {C.And: [rule.serialize() for rule in self.rules]}
+        if self.next:
+            data[C.Next] = self.next
         return data
 
 
 @attr.s
 class Or(BooleanExpression):
-    Rules: T.List["ChoiceRule"] = attr.ib(factory=list)
+    rules: T.List['ChoiceRule'] = attr.ib(factory=list)
 
     _se_order = [
         C.Or,
@@ -291,15 +290,15 @@ class Or(BooleanExpression):
     ]
 
     def _serialize(self) -> dict:
-        data = {C.Or: [rule.serialize() for rule in self.Rules]}
-        if self.Next:
-            data[C.Next] = self.Next
+        data = {C.Or: [rule.serialize() for rule in self.rules]}
+        if self.next:
+            data[C.Next] = self.next
         return data
 
 
 @attr.s
 class Not(BooleanExpression):
-    Rule: T.Optional["ChoiceRule"] = attr.ib(default=None)
+    rule: T.Optional['ChoiceRule'] = attr.ib(default=None)
 
     _se_order = [
         C.Not,
@@ -307,22 +306,22 @@ class Not(BooleanExpression):
     ]
 
     def _serialize(self) -> dict:
-        data = {C.Not: self.Rule.serialize()}
-        if self.Next:
-            data[C.Next] = self.Next
+        data = {C.Not: self.rule.serialize()}
+        if self.next:
+            data[C.Next] = self.next
         return data
 
 
-def and_(*rules: "ChoiceRule") -> And:
-    return And(Rules=list(rules))
+def and_(*rules: 'ChoiceRule') -> And:
+    return And(rules=list(rules))
 
 
-def or_(*rules: "ChoiceRule") -> Or:
-    return Or(Rules=list(rules))
+def or_(*rules: 'ChoiceRule') -> Or:
+    return Or(rules=list(rules))
 
 
-def not_(rule: "ChoiceRule") -> Not:
-    return Not(Rule=rule)
+def not_(rule: 'ChoiceRule') -> Not:
+    return Not(rule=rule)
 
 
 Bool = BooleanExpression  # alias of BooleanExpression
