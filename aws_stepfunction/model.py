@@ -2,7 +2,7 @@
 
 import typing as T
 import attr
-
+from .constant import Constant as C
 
 @attr.s
 class StepFunctionObject:
@@ -51,7 +51,7 @@ class StepFunctionObject:
     @classmethod
     def _to_alias(cls, data: dict) -> dict:
         mapper = {
-            field.name: field.metadata.get("alias", field.name)
+            field.name: field.metadata.get(C.ALIAS, field.name)
             for field in attr.fields(cls)
         }
         return {

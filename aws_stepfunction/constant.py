@@ -324,4 +324,6 @@ class Constant:
     TimestampLessThanEquals = TestExpressionEnum.TimestampLessThanEquals.value
     TimestampLessThanEqualsPath = TestExpressionEnum.TimestampLessThanEqualsPath.value
 
+    # Python library implementation constant
     Sep = "____"
+    ALIAS = "alias"
