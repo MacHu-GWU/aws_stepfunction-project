@@ -2,7 +2,7 @@
 
 import typing as T
 import attr
-from .state import Task, Retry, Catch
+from ..state import Task, Retry, Catch
 
 
 @attr.s

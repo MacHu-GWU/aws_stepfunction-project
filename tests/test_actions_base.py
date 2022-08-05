@@ -4,7 +4,7 @@ import os
 import pytest
 
 from rich import print as rprint
-from aws_stepfunction.actions import (
+from aws_stepfunction.actions.base import (
     _TaskContext, task_context,
     _resolve_lambda_function_arn,
     lambda_invoke,

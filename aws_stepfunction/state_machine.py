@@ -14,37 +14,6 @@ from .state import (
     StateType, Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail
 )
 
-
-@attr.s
-class Context:
-    """
-    :param stack: track the current top level state machine
-    :param state_machines: all declared state machine metadata
-    """
-    stack: T.List['StateMachine'] = attr.ib(factory=list)
-    state_machines: T.Dict[str, 'StateMachine'] = attr.ib(factory=dict)
-
-    def push(self, sm: 'StateMachine'):
-        self.stack.append(sm)
-        self.state_machines[sm.ID] = sm
-
-    def pop(self) -> 'StateMachine':
-        sm = self.stack.pop()
-        return sm
-
-    @property
-    def current(self) -> 'StateMachine':
-        return self.stack[-1]
-
-    def find_state_owner(self, state: 'State') -> T.Optional['StateMachine']:
-        if state._state_machine_id is None:
-            return None
-        else:
-            return self.state_machines[state._state_machine_id]
-
-
-_context = Context()
-
 # ------------------------------------------------------------------------------
 # StateMachine data model
 # ------------------------------------------------------------------------------
@@ -62,16 +31,6 @@ class StateMachine(StepFunctionObject):
 
     _previous_state: T.Optional['StateType'] = attr.ib(default=None)
 
-    _is_parallel_branch: bool = attr.ib(default=False)
-    _state_orders: T.Deque[str] = attr.ib(factory=deque)
-
-    def __enter__(self) -> 'StateMachine':
-        _context.push(self)
-        return self
-
-    def __exit__(self, exc_type, exc_value, exc_traceback):
-        _context.pop()
-
     def add_state(self, state: 'StateType'):
         if state.id in self.states:
             raise exc.StateMachineError.make(
@@ -81,7 +40,6 @@ class StateMachine(StepFunctionObject):
             )
         else:
             self.states[state.id] = state
-            # state._uuid = f"{self.ID}{C.Sep}{state.id}"
 
     def remove_state(self, state: 'StateType'):
         if state.id not in self.states:
@@ -91,9 +49,6 @@ class StateMachine(StepFunctionObject):
         else:
             self.states.pop(state.id)
             state._state_machine = {state.id}
-
-    def set_start_at(self, state: 'StateType'):
-        self.StartAt = state.id
 
     # Workflow
     def start(self, state: 'StateType'):
@@ -271,8 +226,6 @@ class StateMachine(StepFunctionObject):
                 for state_id, state in self.states.items()
             },
         }
-        if self._is_parallel_branch is True:
-            return data
 
         if self.comment:
             data[C.Comment] = self.comment
