@@ -28,7 +28,8 @@ try:
         Var,
     )
     from . import actions
-    from .step_function import StepFunctionObject
+    from .actions import task_context
+    from .step_function import StepFunction
     from .constant import Constant
 except ImportError as e:
     print(e)

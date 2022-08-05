@@ -5,6 +5,7 @@ import typing as T
 import attr
 import attr.validators as vs
 
+from . import exc
 from .constant import Constant as C, TestExpressionEnum
 from .utils import is_json_path
 from .model import StepFunctionObject
@@ -32,9 +33,18 @@ class ChoiceRule(StepFunctionObject):
         metadata={C.ALIAS: C.Next},
     )
 
+    _next_state: T.Optional['StateType'] = attr.ib(default=None)
+
     def next_then(self, state: 'StateType'):
         self.next = state.id
+        self._next_state = state
         return self
+
+    def _check_next(self):
+        if self.next is None:
+            raise exc.ValidationError(
+                f"Top level choice rule has to have a {C.Next!r} state"
+            )
 
 
 # ------------------------------------------------------------------------------
@@ -98,52 +108,116 @@ class Var(StepFunctionObject):
     path: str = attr.ib(validator=vs.instance_of(str))
 
     def is_null(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsNull, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsNull,
+            expected=True,
+        )
 
     def is_not_null(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsNull, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsNull,
+            expected=False,
+        )
 
     def is_present(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsPresent, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsPresent,
+            expected=True,
+        )
 
     def is_not_present(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsPresent, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsPresent,
+            expected=False,
+        )
 
     def is_numeric(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsNumeric, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsNumeric,
+            expected=True,
+        )
 
     def is_not_numeric(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsNumeric, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsNumeric,
+            expected=False,
+        )
 
     def is_string(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsString, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsString,
+            expected=True,
+        )
 
     def is_not_string(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsString, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsString,
+            expected=False,
+        )
 
     def is_boolean(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsBoolean, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsBoolean,
+            expected=True,
+        )
 
     def is_not_boolean(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsBoolean, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsBoolean,
+            expected=False,
+        )
 
     def is_timestamp(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsTimestamp, True)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsTimestamp,
+            expected=True,
+        )
 
     def is_not_timestamp(self) -> DataTestExpression:
-        return DataTestExpression(self.path, C.IsTimestamp, False)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.IsTimestamp,
+            expected=False,
+        )
 
     def numeric_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.NumericEqualsPath, value)
-        return DataTestExpression(self.path, C.NumericEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.NumericEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.NumericEquals,
+            expected=value,
+        )
 
     def numeric_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.NumericGreaterThanPath, value)
-        return DataTestExpression(self.path, C.NumericGreaterThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.NumericGreaterThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.NumericGreaterThan,
+            expected=value,
+        )
 
     def numeric_greater_than_equals(
         self, value: T.Union[str, T.Any]
@@ -151,35 +225,73 @@ class Var(StepFunctionObject):
         if isinstance(value, str):
             if value.startswith("$"):
                 return DataTestExpression(
-                    self.path, C.NumericGreaterThanEqualsPath, value
+                    variable=self.path,
+                    operator=C.NumericGreaterThanEqualsPath,
+                    expected=value,
                 )
-        return DataTestExpression(self.path, C.NumericGreaterThanEquals, value)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.NumericGreaterThanEquals,
+            expected=value,
+        )
 
     def numeric_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.NumericLessThanPath, value)
-        return DataTestExpression(self.path, C.NumericLessThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.NumericLessThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.NumericLessThan,
+            expected=value,
+        )
 
     def numeric_less_than_equals(
         self, value: T.Union[str, T.Any]
     ) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.NumericLessThanEqualsPath, value)
-        return DataTestExpression(self.path, C.NumericLessThanEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.NumericLessThanEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.NumericLessThanEquals,
+            expected=value,
+        )
 
     def string_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.StringEqualsPath, value)
-        return DataTestExpression(self.path, C.StringEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.StringEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringEquals,
+            expected=value,
+        )
 
     def string_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.StringGreaterThanPath, value)
-        return DataTestExpression(self.path, C.StringGreaterThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.StringGreaterThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringGreaterThan,
+            expected=value,
+        )
 
     def string_greater_than_equals(
         self, value: T.Union[str, T.Any]
@@ -187,39 +299,85 @@ class Var(StepFunctionObject):
         if isinstance(value, str):
             if value.startswith("$"):
                 return DataTestExpression(
-                    self.path, C.StringGreaterThanEqualsPath, value
+                    variable=self.path,
+                    operator=C.StringGreaterThanEqualsPath,
+                    expected=value,
                 )
-        return DataTestExpression(self.path, C.StringGreaterThanEquals, value)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringGreaterThanEquals,
+            expected=value,
+        )
 
     def string_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.StringLessThanPath, value)
-        return DataTestExpression(self.path, C.StringLessThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.StringLessThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringLessThan,
+            expected=value,
+        )
 
     def string_less_than_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.StringLessThanEqualsPath, value)
-        return DataTestExpression(self.path, C.StringLessThanEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.StringLessThanEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringLessThanEquals,
+            expected=value,
+        )
 
     def boolean_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.BooleanEqualsPath, value)
-        return DataTestExpression(self.path, C.BooleanEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.BooleanEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.BooleanEquals,
+            expected=value,
+        )
 
     def timestamp_equals(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.TimestampEqualsPath, value)
-        return DataTestExpression(self.path, C.TimestampEquals, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.TimestampEqualsPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.TimestampEquals,
+            expected=value,
+        )
 
     def timestamp_greater_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.TimestampGreaterThanPath, value)
-        return DataTestExpression(self.path, C.TimestampGreaterThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.TimestampGreaterThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.TimestampGreaterThan,
+            expected=value,
+        )
 
     def timestamp_greater_than_equals(
         self, value: T.Union[str, T.Any]
@@ -227,15 +385,29 @@ class Var(StepFunctionObject):
         if isinstance(value, str):
             if value.startswith("$"):
                 return DataTestExpression(
-                    self.path, C.TimestampGreaterThanEqualsPath, value
+                    variable=self.path,
+                    operator=C.TimestampGreaterThanEqualsPath,
+                    expected=value,
                 )
-        return DataTestExpression(self.path, C.TimestampGreaterThanEquals, value)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.TimestampGreaterThanEquals,
+            expected=value,
+        )
 
     def timestamp_less_than(self, value: T.Union[str, T.Any]) -> DataTestExpression:
         if isinstance(value, str):
             if value.startswith("$"):
-                return DataTestExpression(self.path, C.TimestampLessThanPath, value)
-        return DataTestExpression(self.path, C.TimestampLessThan, value)
+                return DataTestExpression(
+                    variable=self.path,
+                    operator=C.TimestampLessThanPath,
+                    expected=value,
+                )
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.TimestampLessThan,
+            expected=value,
+        )
 
     def timestamp_less_than_equals(
         self, value: T.Union[str, T.Any]
@@ -243,12 +415,22 @@ class Var(StepFunctionObject):
         if isinstance(value, str):
             if value.startswith("$"):
                 return DataTestExpression(
-                    self.path, C.TimestampLessThanEqualsPath, value
+                    variable=self.path,
+                    operator=C.TimestampLessThanEqualsPath,
+                    expected=value,
                 )
-        return DataTestExpression(self.path, C.TimestampLessThanEquals, value)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.TimestampLessThanEquals,
+            expected=value,
+        )
 
     def string_matches(self, value: str) -> DataTestExpression:
-        return DataTestExpression(self.path, C.StringMatches, value)
+        return DataTestExpression(
+            variable=self.path,
+            operator=C.StringMatches,
+            expected=value,
+        )
 
 
 Test = DataTestExpression  # alias of DataTestExpression

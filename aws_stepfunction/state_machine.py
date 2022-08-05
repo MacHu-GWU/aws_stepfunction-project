@@ -31,24 +31,53 @@ class StateMachine(StepFunctionObject):
 
     _previous_state: T.Optional['StateType'] = attr.ib(default=None)
 
-    def add_state(self, state: 'StateType'):
+    _se_order = [
+        C.Version,
+        C.StartAt,
+        C.Comment,
+        C.TimeoutSeconds,
+        C.States,
+    ]
+
+    def add_state(
+        self,
+        state: 'StateType',
+        ignore_exists: bool = False,
+    ) -> bool:
+        """
+        :rtype: indicate whether a new state is added
+        """
         if state.id in self.states:
-            raise exc.StateMachineError.make(
-                self,
-                f"Cannot add State(ID={state.id!r}), "
-                f"It is already defined!"
-            )
+            if ignore_exists is False:
+                raise exc.StateMachineError.make(
+                    self,
+                    f"Cannot add State(ID={state.id!r}), "
+                    f"it is already defined!"
+                )
+            return False
         else:
             self.states[state.id] = state
+            return True
 
-    def remove_state(self, state: 'StateType'):
+    def remove_state(
+        self,
+        state: 'StateType',
+        ignore_not_exists: bool = False,
+    ) -> bool:
+        """
+        :rtype: indicate whether a state is removed
+        """
         if state.id not in self.states:
-            raise exc.StateMachineError.make(
-                self, ""
-            )
+            if ignore_not_exists is False:
+                raise exc.StateMachineError.make(
+                    self,
+                    f"Cannot remove State(ID={state.id!r}), "
+                    f"it doesn't exist!"
+                )
+            return False
         else:
             self.states.pop(state.id)
-            state._state_machine = {state.id}
+            return True
 
     # Workflow
     def start(self, state: 'StateType'):
@@ -58,6 +87,8 @@ class StateMachine(StepFunctionObject):
         return self
 
     def next_then(self, state: 'StateType'):
+        if self._previous_state is None:
+            raise ValueError("You cannot go next from NO WHERE!")
         self._previous_state.next = state.id
         if state.id not in self.states:
             self.add_state(state)
@@ -111,7 +142,6 @@ class StateMachine(StepFunctionObject):
             kwargs["id"] = id
         map_ = Map(**kwargs)
         self._previous_state.next = map_.id
-        rprint(self._previous_state)
         self.add_state(map_)
         self._previous_state = map_
         return self
@@ -130,12 +160,12 @@ class StateMachine(StepFunctionObject):
             kwargs["id"] = id
         if default is not None:
             kwargs["default"] = default.id
-        choice = Choice(
-            **kwargs
-        )
+        choice = Choice(**kwargs)
         self._previous_state.next = choice.id
         self.add_state(choice)
-        self._previous_state = choice
+        for choice_rule in choice.choices:
+            self.add_state(choice_rule._next_state, ignore_exists=True)
+        self._previous_state = None
         return choice
 
     def wait(
@@ -234,4 +264,5 @@ class StateMachine(StepFunctionObject):
         if self.timeout_seconds:
             data[C.TimeoutSeconds] = self.timeout_seconds
 
+        data = self._re_order(data)
         return data

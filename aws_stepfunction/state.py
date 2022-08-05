@@ -742,6 +742,15 @@ class Choice(
         self.default = fail.id
         return fail
 
+    def _serialize(self) -> dict:
+        data = super()._serialize()
+        choices = [
+            choice.serialize()
+            for choice in self.choices
+        ]
+        data[C.Choices] = choices
+        return data
+
 
 @attr.s
 class Succeed(
