@@ -11,59 +11,60 @@ from aws_stepfunction.constant import Constant as C
 
 
 class TestParallel:
-    # def test_init_directly(self):
-    #     with StateMachine(is_parallel_branch=True) as sm1:
+    def test_init_directly(self):
+        with StateMachine(is_parallel_branch=True) as sm1:
+            task21 = Task(id="task21", resource="arn", end=True)
+            sm1.set_start_at(task21)
+
+        with StateMachine(is_parallel_branch=True) as sm2:
+            task22 = Task(id="task22", resource="arn", end=True)
+            sm2.set_start_at(task22)
+
+        para = Parallel(branches=[sm1, sm2])
+
+        with pytest.raises(exc.StateValidationError):
+            para.serialize()
+
+        para.end = True
+        assert para.serialize() == {
+            C.Type: C.Parallel,
+            C.Branches: [
+                {
+                    C.StartAt: task21.id,
+                    C.States: {
+                        task21.id: task21.serialize()
+                    }
+                },
+                {
+                    C.StartAt: task22.id,
+                    C.States: {
+                        task22.id: task22.serialize()
+                    }
+                }
+            ],
+            C.End: True
+        }
+
+    # def test_init_from_task(self):
+    #     with StateMachine() as sm:
+    #
+    #         task1 = Task(ID="task1", Resource="arn")
     #         task21 = Task(ID="task21", Resource="arn")
-    #         task21.end()
-    #         sm1.set_start_at(task21)
-    #
-    #     with StateMachine(is_parallel_branch=True) as sm2:
     #         task22 = Task(ID="task22", Resource="arn")
-    #         task22.end()
-    #         sm2.set_start_at(task22)
+    #         task3 = Task(ID="task3", Resource="arn")
     #
-    #     para = Parallel(Branches=[sm1, sm2])
+    #         (
+    #             task1
+    #             .parallel([task21, task22])
+    #             .next(task3)
+    #             .end()
+    #         )
     #
-    #     with pytest.raises(exc.StateValidationError):
-    #         para.serialize()
+    #         sm.set_start_at(task1)
     #
-    #     para.end()
-    #     assert para.serialize() == {
-    #         C.Type: C.Parallel,
-    #         C.Branches: [
-    #             {
-    #                 C.StartAt: task21.ID,
-    #                 C.States: {
-    #                     task21.ID: task21.serialize()
-    #                 }
-    #             },
-    #             {
-    #                 C.StartAt: task22.ID,
-    #                 C.States: {
-    #                     task22.ID: task22.serialize()
-    #                 }
-    #             }
-    #         ],
-    #         C.End: True
-    #     }
-
-    def test_init_from_task(self):
-        with StateMachine() as sm:
-            task1 = Task(ID="task1", Resource="arn")
-            task21 = Task(ID="task21", Resource="arn")
-            task22 = Task(ID="task22", Resource="arn")
-            task3 = Task(ID="task3", Resource="arn")
-
-            (
-                task1
-                .parallel([task21, task22])
-                .next(task3)
-                .end()
-            )
-
-            sm.set_start_at(task1)
-
-        rprint(sm.serialize())
+    #     # rprint(sm.serialize())
+    #
+    #     print(sm._state_orders)
 
 
 if __name__ == "__main__":

@@ -2,13 +2,23 @@
 
 import os
 import pytest
-from aws_stepfunction.statemachine import StateMachine, Task
+from rich import print as rprint
+from aws_stepfunction.state_machine import StateMachine
+from aws_stepfunction.state import (
+    State, Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail
+)
 
 
-def test():
-    with StateMachine() as sm:
-        task = Task()
-
+class TestState:
+    @pytest.mark.parametrize(
+        "klass",
+        [
+            Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail,
+        ],
+    )
+    def test_invalid_state_id(self, klass: State):
+        with pytest.raises(Exception):
+            klass(id=1)
 
 
 if __name__ == "__main__":

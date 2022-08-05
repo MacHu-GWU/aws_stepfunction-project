@@ -3,6 +3,7 @@
 import typing as T
 
 import attr
+import attr.validators as vs
 
 from . import exc
 from .constant import (
@@ -32,9 +33,18 @@ class State(StepFunctionObject):
     3. 接下来展示跟流程相关的 Next, End
     4. 最后展示详细的 Input Output 处理的细节
     """
-    ID: str = attr.ib(factory=lambda: short_uuid())
-    Type: str = attr.ib(default=None)
-    Comment: T.Optional[str] = attr.ib(default=None)
+    id: str = attr.ib(
+        factory=lambda: short_uuid(),
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=None,
+        metadata={C.ALIAS: C.Type},
+    )
+    comment: T.Optional[str] = attr.ib(
+        default=None,
+        metadata={C.ALIAS: C.Comment},
+    )
 
     _uuid: T.Optional[str] = attr.ib(default=None)
 
@@ -46,7 +56,7 @@ class State(StepFunctionObject):
             with StateMachine() as sm:
                 task = Task(...)
         """
-        self._uuid = self.ID
+        self._uuid = self.id
         if len(_context.stack):
             sm = _context.stack[-1]
             sm.add_state(self)
@@ -60,8 +70,8 @@ class State(StepFunctionObject):
 
     def _serialize(self) -> dict:
         data = self.to_dict()
-        data.pop("ID")
-        data.pop("_uuid")
+        data = self._to_alias(data)
+        data.pop("id")
         if data.get(C.ResultPath, None) == "null":
             data[C.ResultPath] = None
         return data
@@ -82,7 +92,7 @@ class State(StepFunctionObject):
             self._check_json_path(attr, value)
 
 
-def _create_single_machine_from_state(state: '_HasNextOrEnd') -> 'StateMachine':
+def _create_single_machine_from_state(state: 'StateType') -> 'StateMachine':
     """
     """
     # create a new state machine based on given state
@@ -102,103 +112,148 @@ def _create_single_machine_from_state(state: '_HasNextOrEnd') -> 'StateMachine':
 
 @attr.s
 class _HasNextOrEnd(State):
-    Next: T.Optional[str] = attr.ib(default=None)
-    End: T.Optional[bool] = attr.ib(default=None)
+    next: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Next}
+    )
+    end: T.Optional[bool] = attr.ib(
+        default=None, metadata={C.ALIAS: C.End}
+    )
 
     def _check_next_and_end(self):
-        if self.End is True:
-            if self.Next:
+        if self.end is True:
+            if self.next:
                 # when "End" is True, you can NOT have "Next"
                 raise exc.StateValidationError
         else:
-            if not self.Next:
+            if not self.next:
                 # when "End" is not True, you HAVE TO have "Next"
                 raise exc.StateValidationError
 
-    def next(self, state: 'State') -> T.Union[
-        'State',
-        '_HasNextOrEnd',
-    ]:
-        self.Next = state.ID
-        self.End = None
-        return state
-
-    def parallel(
-        self,
-        branches=T.Iterable[T.Union['_HasNextOrEnd', 'StateMachine']],
-    ) -> 'Parallel':
-        sm_list: T.List[StateMachine] = list()
-        for item in branches:
-            if isinstance(item, _HasNextOrEnd):
-                sm = _create_single_machine_from_state(item)
-                sm_list.append(sm)
-            elif isinstance(item, StateMachine):
-                sm_list.append(item)
-            else:
-                raise TypeError
-        para = Parallel(Branches=sm_list)
-        self.next(para)
-        return para
-
-    def end(self):
-        self.Next = None
-        self.End = True
+    # def next(self, state: 'StateType') -> 'StateType':
+    #     self.Next = state.ID
+    #     self.End = None
+    #     return state
+    #
+    # def parallel(
+    #     self,
+    #     branches: T.Iterable[T.Union['StateType', 'StateMachine']],
+    #     id: T.Optional[str] = None,
+    # ) -> 'Parallel':
+    #     state_machine_list: T.List[StateMachine] = list()
+    #     for item in branches:
+    #         if isinstance(item, _HasNextOrEnd):
+    #             state_machine = _create_single_machine_from_state(item)
+    #             state_machine_list.append(state_machine)
+    #         elif isinstance(item, StateMachine):
+    #             state_machine_list.append(item)
+    #         else:
+    #             raise TypeError
+    #
+    #     kwargs = {C.Branches: state_machine_list}
+    #     if id is not None:
+    #         kwargs[C.ID] = id
+    #
+    #     para = Parallel(**kwargs)
+    #     self.next(para)
+    #     return para
+    #
+    # def map(
+    #     self,
+    #     iterator: T.Union['StateType', 'StateMachine'],
+    #     items_path: T.Optional[str] = None,
+    # ) -> 'Map':
+    #     pass
+    #
+    # def choice(
+    #     self,
+    #     choices: T.Iterable[T.Union['StateType', 'StateMachine']],
+    #     default: T.Optional['StateType'] = None,
+    # ) -> 'Choice':
+    #     pass
+    #
+    # def wait(self, seconds: int) -> 'Wait':
+    #     pass
+    #
+    # def passing(self) -> 'Pass':
+    #     pass
+    #
+    # def succeed(self) -> 'Succeed':
+    #     pass
+    #
+    # def fail(self) -> 'Fail':
+    #     pass
+    #
+    # def end(self):
+    #     self.Next = None
+    #     self.End = True
 
 
 @attr.s
 class _HasInputOutput(State):
-    InputPath: T.Optional[str] = attr.ib(default=None)
-    OutputPath: T.Optional[str] = attr.ib(default=None)
+    input_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.InputPath},
+    )
+    output_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.OutputPath},
+    )
 
     def _check_input_output_path(self):
-        self._check_opt_json_path(C.InputPath, self.InputPath)
-        self._check_opt_json_path(C.OutputPath, self.OutputPath)
+        self._check_opt_json_path(C.InputPath, self.input_path)
+        self._check_opt_json_path(C.OutputPath, self.output_path)
 
 
 @attr.s
 class _HasParameters(State):
-    Parameters: T.Dict[str, T.Any] = attr.ib(factory=dict)
+    parameters: T.Dict[str, T.Any] = attr.ib(
+        factory=dict, metadata={C.ALIAS: C.Parameters},
+    )
 
 
 @attr.s
 class _HasResultSelector(State):
-    ResultSelector: T.Dict[str, T.Any] = attr.ib(factory=dict)
+    result_selector: T.Dict[str, T.Any] = attr.ib(
+        factory=dict, metadata={C.ALIAS: C.ResultSelector},
+    )
 
 
 @attr.s
 class _HasResultPath(State):
-    ResultPath: T.Optional[str] = attr.ib(default=None)
+    result_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.ResultPath},
+    )
 
     def _check_result_path(self):
-        if self.ResultPath is not None:
-            if self.ResultPath != "null":
-                self._check_json_path(C.ResultPath, self.ResultPath)
+        if self.result_path is not None:
+            if self.result_path != "null":
+                self._check_json_path(C.ResultPath, self.result_path)
 
     def use_task_result(self) -> T.Union[
         'Task', 'Parallel', 'Map', 'Pass'
     ]:
-        self.ResultPath = "$"
+        self.result_path = "$"
         return self
 
     def discard_the_result_and_keep_original_input(self) -> T.Union[
         'Task', 'Parallel', 'Map', 'Pass'
     ]:
-        self.ResultPath = "null"
+        self.result_path = "null"
         return self
 
 
 @attr.s
 class _RetryOrCatch(StepFunctionObject):
-    ErrorEquals: T.List[str] = attr.ib(factory=list)
+    error_equals: T.List[str] = attr.ib(
+        factory=list, metadata={C.ALIAS: C.ErrorEquals},
+    )
 
-    def _pre_serialize_validation(self):
-        for error_code in self.ErrorEquals:
+    def _check_error_codes(self):
+        for error_code in self.error_equals:
             if not ErrorCodeEnum.contains(error_code):
                 raise exc.StateValidationError
 
     def _add_error(self, error_code: str) -> '_RetryOrCatch':
-        if error_code not in self.ErrorEquals:
-            self.ErrorEquals.append(error_code)
+        if error_code not in self.error_equals:
+            self.error_equals.append(error_code)
         return self
 
     def at_all_error(self) -> '_RetryOrCatch':
@@ -231,6 +286,11 @@ class _RetryOrCatch(StepFunctionObject):
     def at_intrinsic_failure_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.IntrinsicFailureError.value)
 
+    def _serialize(self) -> dict:
+        data = self.to_dict()
+        data = self._to_alias(data)
+        return data
+
 
 @attr.s
 class Retry(_RetryOrCatch):
@@ -239,21 +299,30 @@ class Retry(_RetryOrCatch):
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error
     """
-    IntervalSeconds: int = attr.ib(default=None)
-    BackoffRate: int = attr.ib(default=None)
-    MaxAttempts: int = attr.ib(default=None)
+    interval_seconds: int = attr.ib(
+        default=None, metadata={C.ALIAS: C.IntervalSeconds},
+    )
+    backoff_rate: int = attr.ib(
+        default=None, metadata={C.ALIAS: C.BackoffRate},
+    )
+    max_attempts: int = attr.ib(
+        default=None, metadata={C.ALIAS: C.MaxAttempts},
+    )
 
     def with_interval_seconds(self, sec: int) -> 'Retry':
-        self.IntervalSeconds = sec
+        self.interval_seconds = sec
         return self
 
     def with_back_off_rate(self, rate: int) -> 'Retry':
-        self.BackoffRate = rate
+        self.backoff_rate = rate
         return self
 
     def with_max_attempts(self, attempts: int) -> 'Retry':
-        self.MaxAttempts = attempts
+        self.max_attempts = attempts
         return self
+
+    def _pre_serialize_validation(self):
+        self._check_error_codes()
 
 
 @attr.s
@@ -263,24 +332,61 @@ class Catch(_RetryOrCatch):
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states
     """
-    ResultPath: str = attr.ib(default=None)
-    Next: str = attr.ib(default=None)
+    next: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Next},
+    )
+    result_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.ResultPath},
+    )
 
     def with_result_path(self, result_path: str):
-        self.ResultPath = result_path
+        self.result_path = result_path
         return self
 
-    def next(self, state: 'State') -> T.Union[
-        'State', '_HasNextOrEnd',
-    ]:
-        self.Next = state.ID
-        return state
+    def with_next(self, state: 'StateType'):
+        self.next = state.id
+        return self
+
+    def _check_next(self):
+        if self.next is None:
+            raise exc.ValidationError(f"{C.Catch}.{C.Next} is not defined!")
+
+    def _check_result(self):
+        if self.result_path is not None:
+            if not is_json_path(self.result_path):
+                raise exc.ValidationError(
+                    f"{C.Catch}.{C.ResultPath} = {self.result_path!r} "
+                    f"is not a valid JSON path!"
+                )
+
+    def _pre_serialize_validation(self):
+        self._check_error_codes()
+        self._check_next()
 
 
 @attr.s
 class _HasRetryCatch(State):
-    Retry: T.List['Retry'] = attr.ib(factory=list)
-    Catch: T.List['Catch'] = attr.ib(factory=list)
+    retry: T.List['Retry'] = attr.ib(
+        factory=list, metadata={C.ALIAS: C.Retry},
+    )
+    catch: T.List['Catch'] = attr.ib(
+        factory=list, metadata={C.ALIAS: C.Catch},
+    )
+
+    def _serialize_retry_catch_fields(self, data: dict) -> dict:
+        if self.retry:
+            data[C.Retry] = [
+                retry.serialize()
+                for retry in self.retry
+            ]
+
+        if self.catch:
+            data[C.Catch] = [
+                catch.serialize()
+                for catch in self.catch
+            ]
+
+        return data
 
 
 @attr.s
@@ -292,34 +398,49 @@ class Task(
     _HasResultPath,
     _HasRetryCatch,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Task}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Task)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Task}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Task, metadata={C.ALIAS: C.Type},
+    )
+    resource: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Resource},
+    )
+    timeout_seconds_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.TimeoutSecondsPath},
+    )
+    timeout_seconds: T.Optional[int] = attr.ib(
+        default=None, metadata={C.ALIAS: C.TimeoutSeconds},
+    )
+    heartbeat_seconds_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.HeartbeatSecondsPath},
+    )
+    heartbeat_seconds: T.Optional[int] = attr.ib(
+        default=None, metadata={C.ALIAS: C.HeartbeatSeconds},
+    )
 
-    Resource: T.Optional[str] = attr.ib(default=None)
-    TimeoutSecondsPath: T.Optional[str] = attr.ib(default=None)
-    TimeoutSeconds: T.Optional[int] = attr.ib(default=None)
-    HeartbeatSecondsPath: T.Optional[str] = attr.ib(default=None)
-    HeartbeatSeconds: T.Optional[int] = attr.ib(default=None)
-
-    _key_order = [
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # state specific
         C.Resource,
         C.TimeoutSeconds,
         C.TimeoutSecondsPath,
         C.HeartbeatSeconds,
         C.HeartbeatSecondsPath,
-
+        # flow
         C.Next,
         C.End,
-
+        # input output
         C.InputPath,
         C.Parameters,
         C.ResultSelector,
         C.ResultPath,
         C.OutputPath,
-
+        # error handling
         C.Retry,
         C.Catch,
     ]
@@ -329,8 +450,13 @@ class Task(
         self._check_input_output_path()
         self._check_result_path()
 
-        self._check_opt_json_path(C.TimeoutSecondsPath, self.TimeoutSecondsPath)
-        self._check_opt_json_path(C.HeartbeatSecondsPath, self.HeartbeatSecondsPath)
+        self._check_opt_json_path(C.TimeoutSecondsPath, self.timeout_seconds_path)
+        self._check_opt_json_path(C.HeartbeatSecondsPath, self.heartbeat_seconds_path)
+
+    def _serialize(self) -> dict:
+        data = super()._serialize()
+        data = self._serialize_retry_catch_fields(data)
+        return data
 
 
 @attr.s
@@ -342,11 +468,23 @@ class Parallel(
     _HasResultPath,
     _HasRetryCatch,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Parallel}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Parallel)
-    Branches: T.List['StateMachine'] = attr.ib(factory=list)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Parallel}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Parallel, metadata={C.ALIAS: C.Type},
+    )
+    branches: T.List['StateMachine'] = attr.ib(
+        factory=list, metadata={C.ALIAS: C.Branches},
+    )
 
-    _key_order = [
+    _se_order = [
+        # common
+        # state specific
+        # flow
+        # input output
+        # error handling
         C.Type,
         C.Comment,
 
@@ -366,7 +504,7 @@ class Parallel(
     ]
 
     def _check_branches(self):
-        if len(self.Branches) == 0:
+        if len(self.branches) == 0:
             raise exc.StateValidationError(
                 f"{C.Parallel!r} state can not have empty {C.Branches!r}!"
             )
@@ -382,7 +520,7 @@ class Parallel(
         data = super()._serialize()
 
         branches = list()
-        for state_machine in self.Branches:
+        for state_machine in self.branches:
             dct = state_machine.serialize()
             branches.append(dct)
         data[C.Branches] = branches
@@ -398,28 +536,42 @@ class Map(
     _HasResultPath,
     _HasRetryCatch,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Map}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Map)
-    Iterator: T.Optional['StateMachine'] = attr.ib(default=None)
-    ItemsPath: T.Optional['str'] = attr.ib(default=None)
-    MaxConcurrency: T.Optional[int] = attr.ib(default=None)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Map}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Map, metadata={C.ALIAS: C.Type},
+    )
 
-    _key_order = [
+    iterator: T.Optional['StateMachine'] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Iterator},
+    )
+    items_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.ItemsPath},
+    )
+    max_concurrency: T.Optional[int] = attr.ib(
+        default=None, metadata={C.ALIAS: C.MaxConcurrency},
+    )
+
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # state specific
         C.Iterator,
         C.ItemsPath,
         C.MaxConcurrency,
-
+        # flow
         C.Next,
         C.End,
-
+        # input output
         C.InputPath,
         C.Parameters,
         C.ResultSelector,
         C.ResultPath,
         C.OutputPath,
+        # error handling
 
         C.Retry,
         C.Catch,
@@ -430,7 +582,12 @@ class Map(
         self._check_input_output_path()
         self._check_result_path()
 
-        self._check_opt_json_path(C.ItemsPath, self.ItemsPath)
+        self._check_opt_json_path(C.ItemsPath, self.items_path)
+
+    def _serialize(self) -> dict:
+        data = super()._serialize()
+        data = self._serialize_retry_catch_fields(data)
+        return data
 
 
 class Pass(
@@ -439,16 +596,22 @@ class Pass(
     _HasResultPath,
     _HasParameters,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Pass.value}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Pass)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Pass.value}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Pass, metadata={C.ALIAS: C.Type},
+    )
 
-    _key_order = [
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # flow
         C.Next,
         C.End,
-
+        # input output
         C.InputPath,
         C.Parameters,
         C.ResultPath,
@@ -470,26 +633,40 @@ class Wait(
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
     """
-    ID: str = attr.ib(factory=lambda: f"{C.Wait}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Wait)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Wait}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Wait, metadata={C.ALIAS: C.Type},
+    )
 
-    Seconds: T.Optional[int] = attr.ib(default=None)
-    Timestamp: T.Optional[str] = attr.ib(default=None)
-    SecondsPath: T.Optional[str] = attr.ib(default=None)
-    TimestampPath: T.Optional[str] = attr.ib(default=None)
+    seconds: T.Optional[int] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Seconds},
+    )
+    timestamp: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Timestamp},
+    )
+    seconds_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.SecondsPath},
+    )
+    timestamp_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.TimestampPath},
+    )
 
-    _key_order = [
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # state specific
         C.Seconds,
         C.Timestamp,
         C.SecondsPath,
         C.TimestampPath,
-
+        # flow
         C.Next,
         C.End,
-
+        # input output
         C.InputPath,
         C.OutputPath,
     ]
@@ -507,24 +684,35 @@ class Choice(
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html
     """
-    ID: str = attr.ib(factory=lambda: f"{C.Choice}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Choice)
-    Choices: T.List['ChoiceRule'] = attr.ib(factory=list)
-    Default: T.Optional[str] = attr.ib(default=None)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Choice}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Choice, metadata={C.ALIAS: C.Type},
+    )
 
-    _key_order = [
+    choices: T.List['ChoiceRule'] = attr.ib(
+        factory=list, metadata={C.ALIAS: C.Choices},
+    )
+    default: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Default},
+    )
+
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # state specific
         C.Choices,
         C.Default,
-
+        # input output
         C.InputPath,
         C.OutputPath,
     ]
 
     def _check_choices(self):
-        if len(self.Choices) == 0:
+        if len(self.choices) == 0:
             raise exc.StateValidationError
 
     def _pre_serialize_validation(self):
@@ -532,17 +720,53 @@ class Choice(
 
         self._check_choices()
 
+    def with_default(self, state: 'StateType') -> 'Choice':
+        self.default = state.ID
+        return self
+
+    def default_succeed(
+        self,
+        id: T.Optional[str] = None
+    ) -> 'Succeed':
+        """
+        TODO: Fail has more argument
+        """
+        kwargs = dict()
+        if id is not None:
+            kwargs["id"] = id
+        succeed = Succeed(**kwargs)
+        return succeed
+
+    def default_fail(
+        self,
+        id: T.Optional[str] = None
+    ) -> 'Fail':
+        """
+        TODO: Fail has more argument
+        """
+        kwargs = dict()
+        if id is not None:
+            kwargs["id"] = id
+        fail = Fail(**kwargs)
+        return fail
+
 
 class Succeed(
     _HasInputOutput,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Succeed}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Succeed)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Succeed}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Succeed, metadata={C.ALIAS: C.Type},
+    )
 
-    _key_order = [
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # input output
         C.InputPath,
         C.OutputPath,
     ]
@@ -554,15 +778,34 @@ class Succeed(
 class Fail(
     State,
 ):
-    ID: str = attr.ib(factory=lambda: f"{C.Fail}-{short_uuid()}")
-    Type: str = attr.ib(default=C.Fail)
+    id: str = attr.ib(
+        factory=lambda: f"{C.Fail}-{short_uuid()}",
+        validator=vs.instance_of(str),
+    )
+    type: str = attr.ib(
+        default=C.Fail, metadata={C.ALIAS: C.Type},
+    )
+
     Cause: T.Optional[str] = attr.ib(default=None)
     Error: T.Optional[str] = attr.ib(default=None)
 
-    _key_order = [
+    _se_order = [
+        # common
         C.Type,
         C.Comment,
-
+        # state specific
         C.Cause,
         C.Error,
     ]
+
+
+StateType = T.Union[
+    Task,
+    Parallel,
+    Map,
+    Pass,
+    Wait,
+    Choice,
+    Succeed,
+    Fail,
+]
