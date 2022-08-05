@@ -14,6 +14,13 @@ class ToDictTestObject(StepFunctionObject):
     a_str: T.Optional[str] = attr.ib(default=None)
     a_list: list = attr.ib(factory=list)
     a_dict: dict = attr.ib(factory=dict)
+    _cache: dict = attr.ib(factory=dict)
+
+
+@attr.s
+class ToAliasTestObject(StepFunctionObject):
+    a: int = attr.ib()
+    b: int = attr.ib(metadata={"alias": "bob"})
 
 
 @attr.s
@@ -35,6 +42,11 @@ class TestStepFunctionObject:
     def test_to_dict(self):
         obj = ToDictTestObject()
         assert len(obj.to_dict()) == 0
+
+    def test_to_alias(self):
+        obj = ToAliasTestObject(a=1, b=2)
+        data = ToAliasTestObject._to_alias(obj.to_dict())
+        assert data == {"a": 1, "bob": 2}
 
     def test_re_order(self):
         obj = KeyOrderTestObject(a=1, b=2, c=3, d=4)

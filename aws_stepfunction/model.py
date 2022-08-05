@@ -15,12 +15,23 @@ class StepFunctionObject:
         exclude_none: bool = True,
         exclude_empty_string: bool = True,
         exclude_empty_collection: bool = True,
+        exclude_private_attr: bool = True
     ) -> dict:
         """
         Convert StepFunction Object to Python dict.
+
+        A revision of the ``attr.asdict`` API, allow to exclude:
+
+        - None
+        - empty string
+        - empty collection (list, dict)
         """
         data = dict()
         for k, v in attr.asdict(self).items():
+            if k.startswith("_"):
+                if exclude_private_attr:
+                    continue
+
             if v is None:
                 if exclude_none:
                     continue
@@ -36,6 +47,17 @@ class StepFunctionObject:
                 pass
             data[k] = v
         return data
+
+    @classmethod
+    def _to_alias(cls, data: dict) -> dict:
+        mapper = {
+            field.name: field.metadata.get("alias", field.name)
+            for field in attr.fields(cls)
+        }
+        return {
+            mapper.get(k, k): v
+            for k, v in data.items()
+        }
 
     @classmethod
     def _re_order(cls, data: dict) -> dict:
@@ -77,3 +99,7 @@ class StepFunctionObject:
 
 
 StepFunctionObject._se_order: T.Optional[T.List[str]] = None
+"""
+_se_order is a private class attribute to provide field order information
+for serialization
+"""
