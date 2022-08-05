@@ -13,7 +13,9 @@ from .constant import (
 from .utils import short_uuid, is_json_path
 from .model import StepFunctionObject
 from .choice_rule import ChoiceRule
-from .state_machine import _context, StateMachine
+
+if T.TYPE_CHECKING:
+    from .state_machine import StateMachine
 
 
 # ------------------------------------------------------------------------------
@@ -48,25 +50,25 @@ class State(StepFunctionObject):
 
     _uuid: T.Optional[str] = attr.ib(default=None)
 
-    def __attrs_post_init__(self):
-        """
-        .. code-block:: python
+    # def __attrs_post_init__(self):
+    #     """
+    #     .. code-block:: python
+    #
+    #         # automatically add the task to the state machine
+    #         with StateMachine() as sm:
+    #             task = Task(...)
+    #     """
+    #     self._uuid = self.id
+    #     if len(_context.stack):
+    #         sm = _context.stack[-1]
+    #         sm.add_state(self)
 
-            # automatically add the task to the state machine
-            with StateMachine() as sm:
-                task = Task(...)
-        """
-        self._uuid = self.id
-        if len(_context.stack):
-            sm = _context.stack[-1]
-            sm.add_state(self)
-
-    @property
-    def _state_machine_id(self) -> T.Optional[str]:
-        if C.Sep in self._uuid:
-            return self._uuid.split(C.Sep, 1)[0]
-        else:
-            return None
+    # @property
+    # def _state_machine_id(self) -> T.Optional[str]:
+    #     if C.Sep in self._uuid:
+    #         return self._uuid.split(C.Sep, 1)[0]
+    #     else:
+    #         return None
 
     def _serialize(self) -> dict:
         data = self.to_dict()
@@ -92,22 +94,22 @@ class State(StepFunctionObject):
             self._check_json_path(attr, value)
 
 
-def _create_single_machine_from_state(state: 'StateType') -> 'StateMachine':
-    """
-    """
-    # create a new state machine based on given state
-    with StateMachine() as new_sm:
-        new_sm._is_parallel_branch = True
-        new_sm.add_state(state)
-        new_sm.set_start_at(state)
-        state.end()
-
-    # un-associate the given state from its old state machine
-    old_sm = _context.find_state_owner(state)
-    if old_sm is not None:
-        old_sm.remove_state(state)
-
-    return new_sm
+# def _create_single_machine_from_state(state: 'StateType') -> 'StateMachine':
+#     """
+#     """
+#     # create a new state machine based on given state
+#     with StateMachine() as new_sm:
+#         new_sm._is_parallel_branch = True
+#         new_sm.add_state(state)
+#         new_sm.set_start_at(state)
+#         state.end()
+#
+#     # un-associate the given state from its old state machine
+#     old_sm = _context.find_state_owner(state)
+#     if old_sm is not None:
+#         old_sm.remove_state(state)
+#
+#     return new_sm
 
 
 @attr.s
@@ -123,11 +125,19 @@ class _HasNextOrEnd(State):
         if self.end is True:
             if self.next:
                 # when "End" is True, you can NOT have "Next"
-                raise exc.StateValidationError
+                raise exc.StateValidationError.make(
+                    self,
+                    f"{C.End!r} is True, "
+                    f"but the {C.Next!r} is also defined!"
+                )
         else:
             if not self.next:
                 # when "End" is not True, you HAVE TO have "Next"
-                raise exc.StateValidationError
+                raise exc.StateValidationError.make(
+                    self,
+                    f"{C.End!r} is False, "
+                    f"but the {C.Next!r} is not defined!"
+                )
 
     # def next(self, state: 'StateType') -> 'StateType':
     #     self.Next = state.ID
@@ -528,6 +538,7 @@ class Parallel(
         return data
 
 
+@attr.s
 class Map(
     _HasNextOrEnd,
     _HasInputOutput,
@@ -590,6 +601,7 @@ class Map(
         return data
 
 
+@attr.s
 class Pass(
     _HasInputOutput,
     _HasNextOrEnd,
@@ -624,6 +636,7 @@ class Pass(
         self._check_result_path()
 
 
+@attr.s
 class Wait(
     _HasInputOutput,
     _HasNextOrEnd,
@@ -676,6 +689,7 @@ class Wait(
         self._check_input_output_path()
 
 
+@attr.s
 class Choice(
     _HasInputOutput
 ):
@@ -751,6 +765,7 @@ class Choice(
         return fail
 
 
+@attr.s
 class Succeed(
     _HasInputOutput,
 ):
