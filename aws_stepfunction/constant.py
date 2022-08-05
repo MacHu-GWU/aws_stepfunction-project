@@ -107,6 +107,14 @@ class ErrorCodeEnum(StringEnum):
     NoChoiceMatchedError = "States.NoChoiceMatched"
     IntrinsicFailureError = "States.IntrinsicFailure"
 
+    DataLimitExceededError = "States.DataLimitExceeded"
+
+    LambdaUnknownError = "Lambda.Unknown"
+    LambdaServiceError = "Lambda.ServiceException"
+    LambdaAWSError = "Lambda.AWSLambdaException"
+    LambdaSdkClientError = "Lambda.SdkClientException"
+    LambdaTooManyRequestsError = "Lambda.TooManyRequestsException"
+
 
 class RetryFieldEnum(StringEnum):
     ErrorEquals = "ErrorEquals"
@@ -262,6 +270,13 @@ class Constant:
     BranchFailedError = ErrorCodeEnum.BranchFailedError.value
     NoChoiceMatchedError = ErrorCodeEnum.NoChoiceMatchedError.value
     IntrinsicFailureError = ErrorCodeEnum.IntrinsicFailureError.value
+    DataLimitExceededError = ErrorCodeEnum.DataLimitExceededError.value
+
+    LambdaUnknownError = ErrorCodeEnum.LambdaUnknownError.value
+    LambdaServiceError = ErrorCodeEnum.LambdaServiceError.value
+    LambdaAWSError = ErrorCodeEnum.LambdaAWSError.value
+    LambdaSdkClientError = ErrorCodeEnum.LambdaSdkClientError.value
+    LambdaTooManyRequestsError = ErrorCodeEnum.LambdaTooManyRequestsError.value
 
     # Retry field
     ErrorEquals = RetryFieldEnum.ErrorEquals.value

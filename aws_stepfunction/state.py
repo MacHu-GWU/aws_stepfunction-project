@@ -256,6 +256,10 @@ class _RetryOrCatch(StepFunctionObject):
         factory=list, metadata={C.ALIAS: C.ErrorEquals},
     )
 
+    @classmethod
+    def new(cls) -> '_RetryOrCatch':
+        return cls()
+
     def _check_error_codes(self):
         for error_code in self.error_equals:
             if not ErrorCodeEnum.contains(error_code):
@@ -266,35 +270,53 @@ class _RetryOrCatch(StepFunctionObject):
             self.error_equals.append(error_code)
         return self
 
-    def at_all_error(self) -> '_RetryOrCatch':
+    def if_all_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.AllError.value)
 
-    def at_heartbeat_timeout_error(self) -> '_RetryOrCatch':
+    def if_heartbeat_timeout_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.HeartbeatTimeoutError.value)
 
-    def at_timeout_error(self) -> '_RetryOrCatch':
+    def if_timeout_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.TimeoutError.value)
 
-    def at_task_failed_error(self) -> '_RetryOrCatch':
+    def if_task_failed_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.TaskFailedError.value)
 
-    def at_permissions_error(self) -> '_RetryOrCatch':
+    def if_permissions_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.PermissionsError.value)
 
-    def at_result_path_match_failure_error(self) -> '_RetryOrCatch':
+    def if_result_path_match_failure_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.ResultPathMatchFailureError.value)
 
-    def at_parameter_path_failure_error(self) -> '_RetryOrCatch':
+    def if_parameter_path_failure_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.ParameterPathFailureError.value)
 
-    def at_branch_failed_error(self) -> '_RetryOrCatch':
+    def if_branch_failed_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.BranchFailedError.value)
 
-    def at_no_choice_matched_error(self) -> '_RetryOrCatch':
+    def if_no_choice_matched_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.NoChoiceMatchedError.value)
 
-    def at_intrinsic_failure_error(self) -> '_RetryOrCatch':
+    def if_intrinsic_failure_error(self) -> '_RetryOrCatch':
         return self._add_error(ErrorCodeEnum.IntrinsicFailureError.value)
+
+    def if_data_limit_exceeded_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.DataLimitExceededError.value)
+
+    def if_lambda_unknown_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.LambdaUnknownError.value)
+
+    def if_lambda_service_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.LambdaServiceError.value)
+
+    def if_lambda_aws_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.LambdaAWSError.value)
+
+    def if_lambda_sdk_client_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.LambdaSdkClientError.value)
+
+    def if_lambda_too_many_requests_error(self) -> '_RetryOrCatch':
+        return self._add_error(ErrorCodeEnum.LambdaTooManyRequestsError.value)
 
     def _serialize(self) -> dict:
         data = self.to_dict()
@@ -309,13 +331,13 @@ class Retry(_RetryOrCatch):
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error
     """
-    interval_seconds: int = attr.ib(
+    interval_seconds: T.Optional[int] = attr.ib(
         default=None, metadata={C.ALIAS: C.IntervalSeconds},
     )
-    backoff_rate: int = attr.ib(
+    backoff_rate: T.Optional[T.Union[float, int]] = attr.ib(
         default=None, metadata={C.ALIAS: C.BackoffRate},
     )
-    max_attempts: int = attr.ib(
+    max_attempts: T.Optional[int] = attr.ib(
         default=None, metadata={C.ALIAS: C.MaxAttempts},
     )
 
@@ -323,7 +345,7 @@ class Retry(_RetryOrCatch):
         self.interval_seconds = sec
         return self
 
-    def with_back_off_rate(self, rate: int) -> 'Retry':
+    def with_back_off_rate(self, rate: T.Union[float, int]) -> 'Retry':
         self.backoff_rate = rate
         return self
 
@@ -349,12 +371,16 @@ class Catch(_RetryOrCatch):
         default=None, metadata={C.ALIAS: C.ResultPath},
     )
 
-    def with_result_path(self, result_path: str):
-        self.result_path = result_path
-        return self
-
     def next_then(self, state: 'StateType'):
         self.next = state.id
+        return self
+
+    def with_result_path(self, result_path: str):
+        """
+        A path that determines what input is sent to the state specified
+        in the Next field.
+        """
+        self.result_path = result_path
         return self
 
     def _check_next(self):
