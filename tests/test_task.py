@@ -41,7 +41,7 @@ class TestTask:
                 Retry().at_task_failed_error().with_max_attempts(1).with_interval_seconds(10),
             ],
             catch=[
-                Catch().at_all_error().with_next(fail),
+                Catch().at_all_error().next_then(fail),
             ],
             end=True,
         )

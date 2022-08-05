@@ -343,7 +343,7 @@ class Catch(_RetryOrCatch):
         self.result_path = result_path
         return self
 
-    def with_next(self, state: 'StateType'):
+    def next_then(self, state: 'StateType'):
         self.next = state.id
         return self
 
