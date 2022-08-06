@@ -24,7 +24,7 @@
 ------
 
 
-.. image:: https://img.shields.io/badge/Link-Document-red.svg
+.. image:: https://img.shields.io/badge/Link-Document-green.svg
     :target: https://aws_stepfunction.readthedocs.io/index.html
 
 .. image:: https://img.shields.io/badge/Link-API-blue.svg
