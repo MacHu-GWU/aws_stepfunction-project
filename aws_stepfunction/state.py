@@ -15,7 +15,7 @@ from .model import StepFunctionObject
 from .choice_rule import ChoiceRule
 
 if T.TYPE_CHECKING:
-    from .state_machine import StateMachine
+    from .workflow import Workflow
 
 
 # ------------------------------------------------------------------------------
@@ -24,6 +24,8 @@ if T.TYPE_CHECKING:
 @attr.s
 class State(StepFunctionObject):
     """
+    Represent a step / a state in a workflow.
+
     :param _uuid: for internal implementation. we track the associated
         state machine of each state object.
 
@@ -40,7 +42,7 @@ class State(StepFunctionObject):
         validator=vs.instance_of(str),
     )
     type: str = attr.ib(
-        default=None,
+        default="UnknownState",
         metadata={C.ALIAS: C.Type},
     )
     comment: T.Optional[str] = attr.ib(
@@ -465,7 +467,7 @@ class Parallel(
     type: str = attr.ib(
         default=C.Parallel, metadata={C.ALIAS: C.Type},
     )
-    branches: T.List['StateMachine'] = attr.ib(
+    branches: T.List['Workflow'] = attr.ib(
         factory=list, metadata={C.ALIAS: C.Branches},
     )
 
@@ -534,7 +536,7 @@ class Map(
         default=C.Map, metadata={C.ALIAS: C.Type},
     )
 
-    iterator: T.Optional['StateMachine'] = attr.ib(
+    iterator: T.Optional['Workflow'] = attr.ib(
         default=None, metadata={C.ALIAS: C.Iterator},
     )
     items_path: T.Optional[str] = attr.ib(
