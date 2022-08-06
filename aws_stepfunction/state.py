@@ -403,7 +403,7 @@ class Task(
         default=None, metadata={C.ALIAS: C.HeartbeatSecondsPath},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -537,7 +537,7 @@ class Parallel(
         factory=list, metadata={C.ALIAS: C.Branches},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         # state specific
         # flow
@@ -612,7 +612,7 @@ class Map(
         default=None, metadata={C.ALIAS: C.MaxConcurrency},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -683,7 +683,7 @@ class Pass(
         default=None, metadata={C.ALIAS: C.Result},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -768,7 +768,7 @@ class Wait(
         default=None, metadata={C.ALIAS: C.TimestampPath},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -831,7 +831,7 @@ class Choice(
         default=None, metadata={C.ALIAS: C.Default},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -914,7 +914,7 @@ class Succeed(
         default=C.Succeed, metadata={C.ALIAS: C.Type},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
@@ -963,7 +963,7 @@ class Fail(
         default=None, metadata={C.ALIAS: C.Error},
     )
 
-    _se_order = [
+    _field_order = [
         # common
         C.Type,
         C.Comment,
