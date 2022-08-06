@@ -16,7 +16,7 @@ __github_username__ = "MacHu-GWU"
 # Public API
 # ------------------------------------------------------------------------------
 try:
-    from .state_machine import StateMachine
+    from .workflow import Workflow
     from .state import (
         State,
         Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail,

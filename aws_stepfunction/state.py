@@ -14,7 +14,7 @@ from .utils import short_uuid, is_json_path
 from .model import StepFunctionObject
 from .choice_rule import ChoiceRule
 
-if T.TYPE_CHECKING:
+if T.TYPE_CHECKING:  # pragma: no cover
     from .workflow import Workflow
 
 
