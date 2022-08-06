@@ -1,11 +1,26 @@
 # -*- coding: utf-8 -*-
 
+"""
+AWS StepFunction data model common module.
+"""
+
 import typing as T
 import attr
 from .constant import Constant as C
 
+
+class _StepFunctionObject:
+    """
+    Attributes:
+
+    - ``_field_order``: a private class attribute to provide
+        field order information for serialization.
+    """
+    _field_order: T.List[str] = None
+
+
 @attr.s
-class StepFunctionObject:
+class StepFunctionObject(_StepFunctionObject):
     """
     Base class for all serializable StepFunction object.
     """
@@ -50,6 +65,13 @@ class StepFunctionObject:
 
     @classmethod
     def _to_alias(cls, data: dict) -> dict:
+        """
+        Change Python class attribute name to StepFunction JSON field name
+        (if available). Alias information is stored in class field definition
+        metadata.
+
+        For example, ``Workflow._start_at`` -> ``StartAt``.
+        """
         mapper = {
             field.name: field.metadata.get(C.ALIAS, field.name)
             for field in attr.fields(cls)
@@ -60,27 +82,35 @@ class StepFunctionObject:
         }
 
     @classmethod
-    def _re_order(cls, data: dict) -> dict:
-        if cls._se_order is None:
+    def _sort_field(cls, data: dict) -> dict:
+        """
+        Sort the field based on the defined ``_field_order`` class attribute.
+        """
+        if cls._field_order is None:
             return data
         ordered_data = dict()
-        for key in cls._se_order:
+        for key in cls._field_order:
             if key in data:
                 ordered_data[key] = data[key]
         return ordered_data
 
-    def _pre_serialize_validation(self):
+    def _pre_serialize_validation(self): # pragma: no cover
+        """
+        A pre-serialization hook for validation.
+        """
         pass
 
-    def _post_serialize_validation(self, data: dict):
+    def _post_serialize_validation(self, data: dict): # pragma: no cover
         """
+        A post-serialization hook for validation.
+
         :param data: the serialization output data.
         """
         pass
 
-    def _serialize(self) -> dict:
+    def _serialize(self) -> dict: # pragma: no cover
         """
-        The low level serialization implementation
+        The low level serialization implementation.
         """
         raise NotImplementedError
 
@@ -89,17 +119,15 @@ class StepFunctionObject:
         do_pre_validation=True,
         do_post_validation=True,
     ) -> dict:
+        """
+        Public API for serialization
+        """
         if do_pre_validation:
             self._pre_serialize_validation()
         data = self._serialize()
-        new_data = self._re_order(data)
+        # DO NOT call self._to_alias here, let the subclass decides
+        # when should call it
+        new_data = self._sort_field(data)
         if do_post_validation:
             self._post_serialize_validation(new_data)
         return new_data
-
-
-StepFunctionObject._se_order: T.Optional[T.List[str]] = None
-"""
-_se_order is a private class attribute to provide field order information
-for serialization
-"""
