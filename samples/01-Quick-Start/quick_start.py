@@ -46,7 +46,7 @@ sfn.task_context.aws_account_id = bsm.aws_account_id
 sfn.task_context.aws_region = bsm.aws_region
 
 # Declare a state machine object
-state_machine = sfn.StateMachine(
+workflow = sfn.Workflow(
     comment="The power of aws_stepfunction library!",  # put random comment here
 )
 
@@ -72,7 +72,7 @@ fail = sfn.Fail()
 # We use this "Human-language alike", "Pythonic", "Objective Oriented"
 # "Auto-complete empowered" code pattern to create a human-readable workflow
 (
-    state_machine.start(task_invoke_lambda)
+    workflow.start_from(task_invoke_lambda)
     .choice([
         # choice 1, succeed case
         (  # define condition
@@ -94,9 +94,9 @@ fail = sfn.Fail()
 # Step 4. Declare an instance of AWS StepFunction for AWS console
 # ------------------------------------------------------------------------------
 # This is the metadata of the concrete AWS StepFunction resource
-step_function = sfn.StepFunction(
+state_machine = sfn.StateMachine(
     name="stepfunction_quick_start",
-    state_machine=state_machine,
+    workflow=workflow,
     role_arn="arn:aws:iam::669508176277:role/sanhe-for-everything-admin",
 )
 
@@ -106,7 +106,7 @@ step_function = sfn.StepFunction(
 # please only uncomment one line at a time
 
 # deploy (create / update)
-step_function.deploy(bsm)
+state_machine.deploy(bsm)
 
 # execute step function with custom payload
 # step_function.execute(bsm, payload={"name": "alice"})
