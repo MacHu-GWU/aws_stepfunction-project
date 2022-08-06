@@ -5,7 +5,6 @@
 """
 
 import typing as T
-from collections import OrderedDict
 
 import attr
 import attr.validators as vs
@@ -59,8 +58,8 @@ class Workflow(StepFunctionObject):
         default=None,
         validator=vs.optional(vs.instance_of(str)),
     )
-    _states: T.OrderedDict[str, 'StateType'] = attr.ib(
-        factory=OrderedDict,
+    _states: T.Dict[str, 'StateType'] = attr.ib(
+        factory=dict,
         validator=vs.deep_mapping(
             key_validator=vs.instance_of(str),
             value_validator=vs.instance_of(StateType),
