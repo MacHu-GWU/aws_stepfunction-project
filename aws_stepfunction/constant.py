@@ -66,7 +66,7 @@ class MapFieldEnum(StringEnum):
 
 
 class PassFieldEnum(StringEnum):
-    pass
+    Result = "Result"
 
 
 class WaitFieldEnum(StringEnum):
@@ -242,6 +242,7 @@ class Constant:
     MaxConcurrency = MapFieldEnum.MaxConcurrency.value
 
     # --- Pass state field
+    Result = PassFieldEnum.Result.value
 
     # --- Wait state field
     Seconds = WaitFieldEnum.Seconds.value
