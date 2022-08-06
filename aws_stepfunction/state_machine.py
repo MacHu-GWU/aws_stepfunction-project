@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+State Machine management module
+"""
+
 import typing as T
 import json
 
@@ -10,14 +14,14 @@ from .model import StepFunctionObject
 from .constant import Constant as C
 from .logger import logger
 
-if T.TYPE_CHECKING:
-    from .state_machine import StateMachine
+if T.TYPE_CHECKING:  # pragma: no cover
+    from .workflow import Workflow
 
 
 @attr.s
-class StepFunction(StepFunctionObject):
+class StateMachine(StepFunctionObject):
     name: str = attr.ib()
-    state_machine: 'StateMachine' = attr.ib()
+    workflow: 'Workflow' = attr.ib()
     role_arn: str = attr.ib(
         metadata={C.ALIAS: "roleArn"},
     )
@@ -29,9 +33,6 @@ class StepFunction(StepFunctionObject):
     tracing_configuration: T.Optional[dict] = attr.ib(
         default=None, metadata={C.ALIAS: "tracingConfiguration"},
     )
-
-    # aws_account_id: str = attr.ib()
-    # aws_region: str = attr.ib()
 
     def get_state_machine_arn(self, bsm: 'BotoSesManager') -> str:
         return (
@@ -81,7 +82,7 @@ class StepFunction(StepFunctionObject):
         kwargs = self.to_dict()
         kwargs = self._to_alias(kwargs)
         kwargs.pop("state_machine")
-        kwargs["definition"] = json.dumps(self.state_machine.serialize())
+        kwargs["definition"] = json.dumps(self.workflow.serialize())
         return sfn_client.create_state_machine(**kwargs)
 
     def update(self, bsm: 'BotoSesManager'):
@@ -97,7 +98,7 @@ class StepFunction(StepFunctionObject):
         kwargs.pop("name")
         kwargs.pop("type")
         kwargs.pop("state_machine")
-        kwargs["definition"] = json.dumps(self.state_machine.serialize())
+        kwargs["definition"] = json.dumps(self.workflow.serialize())
         return sfn_client.update_state_machine(**kwargs)
 
     def delete(self, bsm: 'BotoSesManager'):

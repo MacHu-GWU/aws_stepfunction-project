@@ -108,6 +108,8 @@ def lambda_invoke(
     aws_account_id: T.Optional[str] = None,
     aws_region: T.Optional[str] = None,
 ) -> 'Task':
+    """
+    """
     if wait_for_call_back is True:
         resource = TaskResource.lambda_invoke_wait_for_call_back
     else:
@@ -167,6 +169,8 @@ def ecs_run_task(
     aws_account_id: T.Optional[str] = None,
     aws_region: T.Optional[str] = None,
 ) -> Task:
+    """
+    """
     if wait_for_call_back is True:
         resource = TaskResource.ecs_run_task_wait_for_call_back
     elif sync:
@@ -200,6 +204,8 @@ def glue_start_job_run(
     sync: T.Optional[bool] = True,
     id: T.Optional[str] = None,
 ) -> Task:
+    """
+    """
     if sync:
         resource = TaskResource.glue_start_job_run
     else:
@@ -240,6 +246,8 @@ def sns_publish(
     aws_account_id: T.Optional[str] = None,
     aws_region: T.Optional[str] = None,
 ) -> Task:
+    """
+    """
     if wait_for_call_back is True:
         resource = TaskResource.sns_publish_wait_for_call_back
     else:

@@ -29,7 +29,7 @@ try:
     )
     from . import actions
     from .actions import task_context
-    from .step_function import StepFunction
+    from .state_machine import StateMachine
     from .constant import Constant
 except ImportError as e:
     print(e)
