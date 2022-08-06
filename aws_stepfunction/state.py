@@ -847,6 +847,7 @@ class Choice(
     ]
 
     def _check_choices(self):
+        # has to have at least one choice
         if len(self.choices) == 0:
             raise exc.StateValidationError
 
@@ -854,34 +855,6 @@ class Choice(
         self._check_input_output_path()
 
         self._check_choices()
-
-    def default_succeed(
-        self,
-        id: T.Optional[str] = None
-    ) -> 'Succeed':
-        """
-        """
-        kwargs = dict()
-        if id is not None:
-            kwargs["id"] = id
-        succeed = Succeed(**kwargs)
-        self.default = succeed.id
-        return succeed
-
-    def default_fail(
-        self,
-        id: T.Optional[str] = None,
-        cause: T.Optional[str] = None,
-        error: T.Optional[str] = None,
-    ) -> 'Fail':
-        """
-        """
-        kwargs = dict(cause=cause, error=error)
-        if id is not None:
-            kwargs["id"] = id
-        fail = Fail(**kwargs)
-        self.default = fail.id
-        return fail
 
     def _serialize(self) -> dict:
         data = super()._serialize()

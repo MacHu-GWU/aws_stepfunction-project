@@ -3,11 +3,9 @@
 [run]
 omit =
     aws_stepfunction/_version.py
-    aws_stepfunction/cli.py
-    aws_stepfunction/pkg/*
     aws_stepfunction/docs/*
+    aws_stepfunction/actions/*
     aws_stepfunction/tests/*
-    aws_stepfunction/handlers/*
 
 [report]
 # Regexes for lines to exclude from consideration
