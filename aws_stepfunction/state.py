@@ -597,6 +597,12 @@ class Pass(
     _HasParameters,
 ):
     """
+    A Pass state ``("Type": "Pass")`` passes its input to its output,
+    without performing work. Pass states are useful when
+    constructing and debugging state machines.
+
+    In addition to the common state fields, Pass states allow the following fields.
+
     :param result: refers to the output of a virtual task that is passed
         on to the next state. If you include the 'ResultPath' field in your
         state machine definition, 'Result' is placed as specified by
@@ -645,6 +651,38 @@ class Wait(
     _HasNextOrEnd,
 ):
     """
+    A Wait state ``("Type": "Wait")`` delays the state machine from continuing
+    for a specified time. You can choose either a relative time,
+    specified in seconds from when the state begins, or an absolute end time,
+    specified as a timestamp.
+
+    In addition to the common state fields, Wait states have one of
+    the following fields.
+
+    :param seconds: A time, in seconds, to wait before beginning the state
+        specified in the Next field. You must specify time
+        as a positive, integer value.
+    :param timestamp: An absolute time to wait until beginning the state
+        specified in the Next field. Timestamps must conform to the
+        RFC3339 profile of ISO 8601, with the further restrictions that
+        an uppercase T must separate the date and time portions,
+        and an uppercase Z must denote that a numeric time zone offset
+        is not present, for example, ``2016-08-18T17:33:00Z``.
+    :param seconds_path: A time, in seconds, to wait before beginning
+        the state specified in the Next field, specified using a path
+        from the state's input data. You must specify an integer value
+        for this field.
+    :param timestamp_path: An absolute time to wait until beginning the state
+        specified in the Next field, specified using a path
+        from the state's input data.
+
+    .. note::
+
+        You must specify exactly one of ``Seconds``, ``Timestamp``,
+        ``SecondsPath`` or ``TimestampPath``. In addition, the maximum wait time
+        that you can specify for Standard Workflows and Express workflows
+        is one year and five minutes respectively.
+
     Reference:
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-wait-state.html
@@ -687,9 +725,25 @@ class Wait(
         C.OutputPath,
     ]
 
+    def _check_argument(self):
+        if sum([
+            bool(self.seconds),
+            bool(self.timestamp),
+            bool(self.seconds_path),
+            bool(self.timestamp_path),
+        ]) != 1:
+            raise exc.StateValidationError(
+                f"You have to specify exact one of "
+                "'seconds', "
+                "'timestamp', "
+                "'seconds_path', "
+                "'timestamp_path', "
+            )
+
     def _pre_serialize_validation(self):
         self._check_next_and_end()
         self._check_input_output_path()
+        self._check_argument()
 
 
 @attr.s
@@ -780,6 +834,13 @@ class Succeed(
     _HasInputOutput,
 ):
     """
+    A Succeed state ``("Type": "Succeed")`` stops an execution successfully.
+    The Succeed state is a useful target for Choice state branches that
+    don't do anything but stop the execution.
+
+    Because Succeed states are terminal states, they have no Next field,
+    and don't need an End field.
+
     Reference:
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-succeed-state.html
@@ -810,6 +871,13 @@ class Fail(
     State,
 ):
     """
+    A Fail state ``("Type": "Fail")`` stops the execution of the state machine
+    and marks it as a failure, unless it is caught by a Catch block.
+
+    The Fail state only allows the use of Type and Comment fields from the
+    set of common state fields. In addition, the Fail state allows
+    the following fields.
+
     :param cause: A custom failure string that you can specify for operational
         or diagnostic purposes.
     :param error: An error name that you can provide for operational

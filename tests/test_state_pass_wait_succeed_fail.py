@@ -4,12 +4,22 @@ import os
 import pytest
 
 from rich import print
-from aws_stepfunction.state import Pass, Succeed, Fail
+from aws_stepfunction import exc
+from aws_stepfunction.state import Pass, Wait, Succeed, Fail
 
 
 class TestPass:
     def test(self):
         task = Pass(result={"key": "value"}, next="last")
+        _ = task.serialize()
+
+
+class TestWait:
+    def test(self):
+        task = Wait(next="last")
+        with pytest.raises(exc.StateValidationError):
+            task.serialize()
+        task.seconds = 1
         _ = task.serialize()
 
 
@@ -50,4 +60,4 @@ if __name__ == "__main__":
         "--cov-report", f"html:{dir_htmlcov}",
         abspath,
     ]
-    subprocess.run(args, check=True)
+    subprocess.run(args)
