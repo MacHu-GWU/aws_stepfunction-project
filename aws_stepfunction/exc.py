@@ -3,7 +3,7 @@
 import typing as T
 
 if T.TYPE_CHECKING:
-    from .state_machine import StateMachine
+    from .workflow import Workflow
     from .state import State
 
 
@@ -15,29 +15,10 @@ class ExecutionError(Exception):
     pass
 
 
-class StateMachineError(Exception):
-    @classmethod
-    def make(cls, sm: 'StateMachine', msg: str):
-        return cls(
-            f"StateMachine(id={sm.id}): {msg}"
-        )
-
-
 class StateError(Exception):
-    pass
-
-
-class StateMachineValidationError(
-    StateMachineError,
-    ValidationError,
-):
-    pass
-
-
-class StateMachineExecutionError(
-    StateMachineError,
-    ExecutionError,
-):
+    """
+    Raise when an error is related to a state.
+    """
     pass
 
 
@@ -50,3 +31,29 @@ class StateValidationError(
         return cls(
             f"State(id={state.id}): {msg}"
         )
+
+
+class WorkflowError(Exception):
+    """
+    Raise when an error is related to a workflow.
+    """
+
+    @classmethod
+    def make(cls, wf: 'Workflow', msg: str):
+        return cls(
+            f"Workflow(id={wf.id}): {msg}"
+        )
+
+
+class WorkflowValidationError(
+    WorkflowError,
+    ValidationError,
+):
+    pass
+
+
+class WorkflowExecutionError(
+    WorkflowError,
+    ExecutionError,
+):
+    pass
