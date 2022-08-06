@@ -123,16 +123,16 @@ The following code snippet is an equivalent of the below Workflow in the Visual 
 
 I guess "a picture is worth a thousand words":
 
-.. image:: https://user-images.githubusercontent.com/6800411/183265612-d93e09bf-4787-4b0f-beb6-ef52c97687ee.png
+.. image:: https://user-images.githubusercontent.com/6800411/183265960-5c1b3e15-e3ac-4035-a8f3-b39d4810e466.png
     :width: 600
 
-.. image:: https://user-images.githubusercontent.com/6800411/183265613-f8c515b4-1d59-4537-bedb-1e3b606a3ddd.png
+.. image:: https://user-images.githubusercontent.com/6800411/183265961-9312df74-9fbe-42b3-bfc8-747ce0009929.png
     :width: 600
 
-.. image:: https://user-images.githubusercontent.com/6800411/183265614-411f20c3-80dc-442f-afe8-04996bfe7fd3.png
+.. image:: https://user-images.githubusercontent.com/6800411/183265962-c01bc5d4-7d0a-40a2-9a6a-0207a12b41cb.png
     :width: 600
 
-.. image:: https://user-images.githubusercontent.com/6800411/183265615-c63c2797-6768-464c-98ee-b88763c6de40.png
+.. image:: https://user-images.githubusercontent.com/6800411/183265963-8d177efb-93a9-484a-856a-cc2d6f7c4d15.png
     :width: 600
 
 
