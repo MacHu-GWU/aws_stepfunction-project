@@ -10,7 +10,7 @@ from .constant import Constant as C, TestExpressionEnum
 from .utils import is_json_path
 from .model import StepFunctionObject
 
-if T.TYPE_CHECKING:
+if T.TYPE_CHECKING: # pragma: no cover
     from .state import StateType
 
 # ------------------------------------------------------------------------------
@@ -55,7 +55,7 @@ __a_2_data_test_expression = None
 
 def _is_json_path(inst, attr, value):
     if not is_json_path(value):
-        raise ValueError
+        raise exc.ValidationError
 
 
 @attr.s
@@ -74,6 +74,7 @@ class DataTestExpression(ChoiceRule):
     Reference:
 
     - https://states-language.net/spec.html#choice-state
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html#amazon-states-language-choice-state-rules
     """
     variable: str = attr.ib(
         default="",
@@ -89,12 +90,15 @@ class DataTestExpression(ChoiceRule):
     @operator.validator
     def check_operator(self, attribute, value):
         if not TestExpressionEnum.contains(self.operator):
-            raise ValueError
+            raise exc.ValidationError
 
-    def _pre_serialize_validation(self):
+    def _check_expected(self):
         if self.operator.endswith("Path"):
             if not is_json_path(self.expected):
-                raise ValueError
+                raise exc.ValidationError
+
+    def _pre_serialize_validation(self):
+        self._check_expected()
 
     def _serialize(self) -> dict:
         data = {C.Variable: self.variable, self.operator: self.expected}
