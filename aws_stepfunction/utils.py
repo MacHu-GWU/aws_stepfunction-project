@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+Utility functions.
+"""
+
 import uuid
 import hashlib
 
@@ -14,4 +18,7 @@ def short_uuid(n: int = 7) -> str:
 
 
 def is_json_path(path: str) -> bool:
+    """
+    Verify if string is a valid JSON path.
+    """
     return path.startswith("$")

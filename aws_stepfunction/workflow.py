@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+"""
+
 import typing as T
 from collections import OrderedDict
 
-from rich import print as rprint
 import attr
 import attr.validators as vs
 
@@ -15,16 +18,6 @@ from .choice_rule import ChoiceRule
 from .state import (
     StateType, Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail
 )
-
-# ------------------------------------------------------------------------------
-# Workflow data model
-# ------------------------------------------------------------------------------
-__a_1_workflow = None
-
-
-@attr.s
-class SubWorklow(StepFunctionObject):
-    pass
 
 
 @attr.s

@@ -8,6 +8,7 @@ import typing as T
 import json
 
 import attr
+import attr.validators as vs
 from boto_session_manager import BotoSesManager, AwsServiceEnum
 
 from .model import StepFunctionObject
@@ -20,6 +21,17 @@ if T.TYPE_CHECKING:  # pragma: no cover
 
 @attr.s
 class StateMachine(StepFunctionObject):
+    """
+    Represent an instance of State Machine in AWS Console.
+
+    :param name:
+    :param workflow: :class:`~aws_stepfunction.workflow.Workflow`
+    :param role_arn:
+    :param type:
+    :param logging_configuration:
+    :param tracing_configuration:
+    :param tags:
+    """
     name: str = attr.ib()
     workflow: 'Workflow' = attr.ib()
     role_arn: str = attr.ib(
@@ -29,10 +41,30 @@ class StateMachine(StepFunctionObject):
     logging_configuration: T.Optional[dict] = attr.ib(
         default=None, metadata={C.ALIAS: "loggingConfiguration"},
     )
-    tags: T.Optional[dict] = attr.ib(default=None)
     tracing_configuration: T.Optional[dict] = attr.ib(
         default=None, metadata={C.ALIAS: "tracingConfiguration"},
     )
+    tags: T.Optional[dict] = attr.ib(
+        default=None,
+        validator=vs.optional(vs.deep_mapping(
+            key_validator=vs.instance_of(str),
+            value_validator=vs.instance_of(str),
+        ))
+    )
+
+    def set_type_as_standard(self) -> 'StateMachine':
+        self.type = "STANDARD"
+        return self
+
+    def set_type_as_express(self) -> 'StateMachine':
+        self.type = "EXPRESS"
+        return self
+
+    def _convert_tags(self) -> T.List[T.Dict[str, str]]:
+        return [
+            dict(key=key, value=value)
+            for key, value in self.tags.items()
+        ]
 
     def get_state_machine_arn(self, bsm: 'BotoSesManager') -> str:
         return (
@@ -63,6 +95,9 @@ class StateMachine(StepFunctionObject):
         )
 
     def exists(self, bsm: 'BotoSesManager') -> bool:
+        """
+        Check if the state machine exists.
+        """
         try:
             self.describe(bsm)
             return True
@@ -83,6 +118,8 @@ class StateMachine(StepFunctionObject):
         kwargs = self._to_alias(kwargs)
         kwargs.pop("workflow")
         kwargs["definition"] = json.dumps(self.workflow.serialize())
+        if self.tags:
+            kwargs["tags"] = self._convert_tags()
         return sfn_client.create_state_machine(**kwargs)
 
     def update(self, bsm: 'BotoSesManager'):
@@ -99,6 +136,8 @@ class StateMachine(StepFunctionObject):
         kwargs.pop("type")
         kwargs.pop("workflow")
         kwargs["definition"] = json.dumps(self.workflow.serialize())
+        if self.tags:
+            kwargs.pop("tags")
         return sfn_client.update_state_machine(**kwargs)
 
     def delete(self, bsm: 'BotoSesManager'):
@@ -117,12 +156,21 @@ class StateMachine(StepFunctionObject):
     def execute(
         self,
         bsm: 'BotoSesManager',
-        name: T.Optional[str] = None,
         payload: T.Optional[dict] = None,
+        name: T.Optional[str] = None,
         sync: bool = False,
         trace_header: T.Optional[str] = None,
     ):
         """
+        Execute state machine with custom payload.
+
+        :param payload: custom payload in python dictionary
+        :param name: the execution name, recommend to leave it empty and
+            let step function to generate an uuid for you.
+        :param sync: if true, you need to wait for the execution to finish
+            otherwise, it returns immediately, and you can check the status
+            in the console
+
         Reference:
 
         - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/stepfunctions.html#SFN.Client.start_execution
