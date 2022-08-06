@@ -4,6 +4,7 @@ import os
 import pytest
 
 from rich import print
+
 from aws_stepfunction import exc
 from aws_stepfunction.state import Pass, Wait, Succeed, Fail
 

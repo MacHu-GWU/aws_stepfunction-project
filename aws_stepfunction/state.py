@@ -344,6 +344,42 @@ class Task(
     _HasResultPath,
     _HasRetryCatch,
 ):
+    """
+    A Task state ``("Type": "Task")`` represents a single unit of work
+    performed by a state machine.
+
+    All work in your state machine is done by tasks. A task performs work
+    by using an activity or an AWS Lambda function, or by passing parameters
+    to the API actions of other services.
+
+    :param resource: A URI, especially an ARN that uniquely identifies
+        the specific task to execute.
+    :param timeout_seconds: If the task runs longer than the specified seconds,
+        this state fails with a States.Timeout error name. Must be a positive,
+        non-zero integer. If not provided, the default value is 99999999.
+        The count begins after the task has been started, for example,
+        when ``ActivityStarted`` or ``LambdaFunctionStarted`` are logged
+        in the Execution event history.
+    :param timeout_seconds_path: If you want to provide a timeout value
+        dynamically from the state input using a reference path,
+        use ``TimeoutSecondsPath``. When resolved, the reference path must
+        select fields whose values are positive integers.
+    :param heartbeat_seconds: If more time than the specified seconds elapses
+        between heartbeats from the task, this state fails with a States.
+        Timeout error name. Must be a positive, non-zero integer less than
+        the number of seconds specified in the ``TimeoutSeconds`` field.
+        If not provided, the default value is 99999999. For Activities,
+        the count begins when ``GetActivityTask`` receives a token
+        and ``ActivityStarted`` is logged in the Execution event history.
+    :param heartbeat_seconds_path: If you want to provide a heartbeat value
+        dynamically from the state input using a reference path,
+        use ``HeartbeatSecondsPath``. When resolved, the reference path must
+        select fields whose values are positive integers.
+
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
+    """
     id: str = attr.ib(
         factory=lambda: f"{C.Task}-{short_uuid()}",
         validator=vs.instance_of(str),
@@ -354,17 +390,17 @@ class Task(
     resource: T.Optional[str] = attr.ib(
         default=None, metadata={C.ALIAS: C.Resource},
     )
-    timeout_seconds_path: T.Optional[str] = attr.ib(
-        default=None, metadata={C.ALIAS: C.TimeoutSecondsPath},
-    )
     timeout_seconds: T.Optional[int] = attr.ib(
         default=None, metadata={C.ALIAS: C.TimeoutSeconds},
     )
-    heartbeat_seconds_path: T.Optional[str] = attr.ib(
-        default=None, metadata={C.ALIAS: C.HeartbeatSecondsPath},
+    timeout_seconds_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.TimeoutSecondsPath},
     )
     heartbeat_seconds: T.Optional[int] = attr.ib(
         default=None, metadata={C.ALIAS: C.HeartbeatSeconds},
+    )
+    heartbeat_seconds_path: T.Optional[str] = attr.ib(
+        default=None, metadata={C.ALIAS: C.HeartbeatSecondsPath},
     )
 
     _se_order = [
@@ -437,12 +473,36 @@ class Task(
                 f"{C.Resource!r} is not defined!"
             )
 
+    def _check_timeout(self):
+        if sum([
+            bool(self.timeout_seconds),
+            bool(self.timeout_seconds_path),
+        ]) == 2:
+            raise exc.StateValidationError.make(
+                self,
+                "cannot include both "
+                "'timeout_seconds' and 'timeout_seconds_path'!"
+            )
+
+    def _check_heartbeat(self):
+        if sum([
+            bool(self.heartbeat_seconds),
+            bool(self.heartbeat_seconds_path),
+        ]) == 2:
+            raise exc.StateValidationError.make(
+                self,
+                "cannot include both "
+                "'heartbeat_seconds' and 'heartbeat_seconds_path'!"
+            )
+
     def _pre_serialize_validation(self):
         self._check_next_and_end()
         self._check_input_output_path()
         self._check_result_path()
 
         self._check_resource()
+        self._check_timeout()
+        self._check_heartbeat()
         self._check_opt_json_path(C.TimeoutSecondsPath, self.timeout_seconds_path)
         self._check_opt_json_path(C.HeartbeatSecondsPath, self.heartbeat_seconds_path)
 
@@ -732,7 +792,8 @@ class Wait(
             bool(self.seconds_path),
             bool(self.timestamp_path),
         ]) != 1:
-            raise exc.StateValidationError(
+            raise exc.StateValidationError.make(
+                self,
                 f"You have to specify exact one of "
                 "'seconds', "
                 "'timestamp', "
