@@ -165,9 +165,15 @@ class _RetryOrCatch(StepFunctionObject):
         return cls()
 
     def _check_error_codes(self):
+        if len(self.error_equals) == 0:
+            raise exc.StateValidationError(
+                f"{C.ErrorEquals!r} has to be a NON EMPTY list!"
+            )
         for error_code in self.error_equals:
             if not ErrorCodeEnum.contains(error_code):
-                raise exc.StateValidationError
+                raise exc.StateValidationError(
+                    f"{error_code!r} is not a valid Error Code!"
+                )
 
     def _add_error(self, error_code: str) -> '_RetryOrCatch':
         if error_code not in self.error_equals:
