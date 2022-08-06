@@ -51,15 +51,15 @@ def fail() -> 'Fail':
 
 class TestWorkflow:
     def test_add_and_remove(self, wf, t1):
-        wf.add_state(t1)
+        wf._add_state(t1)
         with pytest.raises(exc.WorkflowError):
-            wf.add_state(t1)
-        wf.add_state(t1, ignore_exists=True)
+            wf._add_state(t1)
+        wf._add_state(t1, ignore_exists=True)
 
-        wf.remove_state(t1)
+        wf._remove_state(t1)
         with pytest.raises(exc.WorkflowError):
-            wf.remove_state(t1)
-        wf.remove_state(t1, ignore_not_exists=True)
+            wf._remove_state(t1)
+        wf._remove_state(t1, ignore_not_exists=True)
 
     def test_cannot_go_next_if_not_started(self, wf, pass_):
         with pytest.raises(exc.WorkflowError):
@@ -380,98 +380,6 @@ class TestWorkflow:
         wf.continue_from(t2).end()
 
         _ = wf.serialize()
-    # def test_workflo1w(self):
-    #     sm = Workflow()
-    #
-    #     t01 = Task(id="T01", resource="arn")
-    #     t02 = Task(id="T02", resource="arn")
-    #     t03_a1 = Task(id="T03-a1", resource="arn")
-    #     t03_a2 = Task(id="T03-a2", resource="arn")
-    #     t03_b1 = Task(id="T03-b1", resource="arn")
-    #     t03_b2 = Task(id="T03-b2", resource="arn")
-    #     t03_c = Task(id="T03-c", resource="arn")
-    #     t03_c_succeed = Succeed()
-    #     t03_c_fail = Fail()
-    #     t04 = Task(id="T04", resource="arn")
-    #     t05_a1 = Task(id="T05-a1", resource="arn")
-    #     t05_a2 = Task(id="T05-a2", resource="arn")
-    #     t05_b1 = Task(id="T05-b1", resource="arn")
-    #     t05_b2 = Task(id="T05-b2", resource="arn")
-    #     t06 = Task(id="T06", resource="arn")
-    #     t07 = Task(id="T07", resource="arn")
-    #     t08 = Task(id="T08", resource="arn")
-    #     t09 = Task(id="T09", resource="arn")
-    #     t10 = Task(id="T10", resource="arn")
-    #
-    #     (
-    #         sm.start(t01)
-    #         .next_then(t02)
-    #         .choice([
-    #             (
-    #                 Var("$.key").string_equals("v1").next_then(t03_a1)
-    #             ),
-    #             (
-    #                 Var("$.key").string_equals("v2").next_then(t03_b1)
-    #             ),
-    #             (
-    #                 Var("$.key").string_equals("v3").next_then(t03_c)
-    #             ),
-    #         ])
-    #         .default_fail()
-    #     )
-    #
-    #     (
-    #         sm.continue_from(t03_a1)
-    #         .next_then(t03_a2)
-    #         .next_then(t04)
-    #     )
-    #
-    #     (
-    #         sm.continue_from(t03_b1)
-    #         .next_then(t03_b2)
-    #         .next_then(t04)
-    #     )
-    #
-    #     (
-    #         sm.continue_from(t03_c)
-    #         .choice([
-    #             Var("$.flag").boolean_equals(True).next_then(t03_c_succeed),
-    #             Var("$.flag").boolean_equals(False).next_then(t03_c_fail),
-    #         ])
-    #     )
-    #
-    #     (
-    #         sm.continue_from(t04)
-    #         .parallel(
-    #             branches=[
-    #                 (
-    #                     sm.parallel_from(t05_a1)
-    #                     .next_then(t05_a2)
-    #                     .end()
-    #                 ),
-    #                 (
-    #                     sm.parallel_from(t05_b1)
-    #                     .next_then(t05_b2)
-    #                     .end()
-    #                 ),
-    #             ]
-    #         )
-    #         .next_then(t06)
-    #         .wait()
-    #         .next_then(t07)
-    #         .map(
-    #             iterator=(
-    #                 sm.map_from(t08)
-    #                 .next_then(t09)
-    #                 .end()
-    #             ),
-    #             items_path="$.items",
-    #         )
-    #         .next_then(t10)
-    #         .end()
-    #     )
-    # rprint(sm._previous_state)
-    # rprint(sm.serialize())
 
 
 if __name__ == "__main__":

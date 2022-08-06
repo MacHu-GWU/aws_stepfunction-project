@@ -78,7 +78,7 @@ class Workflow(StepFunctionObject):
         C.States,
     ]
 
-    def add_state(
+    def _add_state(
         self,
         state: 'StateType',
         ignore_exists: bool = False,
@@ -100,7 +100,7 @@ class Workflow(StepFunctionObject):
             self._states[state.id] = state
             return True
 
-    def remove_state(
+    def _remove_state(
         self,
         state: 'StateType',
         ignore_not_exists: bool = False,
@@ -196,7 +196,7 @@ class Workflow(StepFunctionObject):
         Start the workflow from a state.
         """
         self._start_at = state.id
-        self.add_state(state)
+        self._add_state(state)
         self._started = True
         self._previous_state = state
         return self
@@ -230,7 +230,7 @@ class Workflow(StepFunctionObject):
         self._check_started()
         self._previous_state.next = state.id
         if state.id not in self._states:
-            self.add_state(state)
+            self._add_state(state)
         self._previous_state = state
         return self
 
@@ -244,7 +244,7 @@ class Workflow(StepFunctionObject):
         """
         parallel = self._parallel(branches=branches, id=id)
         self._start_at = parallel.id
-        self.add_state(parallel)
+        self._add_state(parallel)
         self._started = True
         self._previous_state = parallel
         return self
@@ -260,7 +260,7 @@ class Workflow(StepFunctionObject):
         self._check_started()
         parallel = self._parallel(branches=branches, id=id)
         self._previous_state.next = parallel.id
-        self.add_state(parallel)
+        self._add_state(parallel)
         self._started = True
         self._previous_state = parallel
         return self
@@ -282,7 +282,7 @@ class Workflow(StepFunctionObject):
             id=id,
         )
         self._start_at = map_.id
-        self.add_state(map_)
+        self._add_state(map_)
         self._started = True
         self._previous_state = map_
         return self
@@ -305,7 +305,7 @@ class Workflow(StepFunctionObject):
             id=id,
         )
         self._previous_state.next = map_.id
-        self.add_state(map_)
+        self._add_state(map_)
         self._started = True
         self._previous_state = map_
         return self
@@ -325,11 +325,11 @@ class Workflow(StepFunctionObject):
             id=id,
         )
         self._start_at = choice.id
-        self.add_state(choice)
+        self._add_state(choice)
         for choice_rule in choice.choices:
-            self.add_state(choice_rule._next_state, ignore_exists=True)
+            self._add_state(choice_rule._next_state, ignore_exists=True)
         if default is not None:
-            self.add_state(default, ignore_exists=True)
+            self._add_state(default, ignore_exists=True)
         self._started = True
         self._previous_state = None
         return None
@@ -350,11 +350,11 @@ class Workflow(StepFunctionObject):
             id=id,
         )
         self._previous_state.next = choice.id
-        self.add_state(choice)
+        self._add_state(choice)
         for choice_rule in choice.choices:
-            self.add_state(choice_rule._next_state, ignore_exists=True)
+            self._add_state(choice_rule._next_state, ignore_exists=True)
         if default is not None:
-            self.add_state(default, ignore_exists=True)
+            self._add_state(default, ignore_exists=True)
         self._started = True
         self._previous_state = None
         return None
@@ -387,7 +387,7 @@ class Workflow(StepFunctionObject):
         else:
             self._check_started()
             self._previous_state.next = wait.id
-            self.add_state(wait)
+            self._add_state(wait)
             self._started = True
             self._previous_state = wait
         return self
@@ -411,7 +411,7 @@ class Workflow(StepFunctionObject):
         else:
             self._check_started()
             self._previous_state.next = succeed.id
-            self.add_state(succeed)
+            self._add_state(succeed)
             self._started = True
             self._previous_state = succeed
         return self
@@ -437,7 +437,7 @@ class Workflow(StepFunctionObject):
         else:
             self._check_started()
             self._previous_state.next = fail.id
-            self.add_state(fail)
+            self._add_state(fail)
             self._started = True
             self._previous_state = fail
         return self
@@ -455,7 +455,7 @@ class Workflow(StepFunctionObject):
         """
         Continue workflow from a given state.
         """
-        self.add_state(state, ignore_exists=True)
+        self._add_state(state, ignore_exists=True)
         self._started = True
         self._previous_state = state
         return self
