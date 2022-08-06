@@ -596,18 +596,33 @@ class Pass(
     _HasResultPath,
     _HasParameters,
 ):
+    """
+    :param result: refers to the output of a virtual task that is passed
+        on to the next state. If you include the 'ResultPath' field in your
+        state machine definition, 'Result' is placed as specified by
+        'ResultPath' and passed on to the next state.
+
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-pass-state.html
+    """
     id: str = attr.ib(
-        factory=lambda: f"{C.Pass.value}-{short_uuid()}",
+        factory=lambda: f"{C.Pass}-{short_uuid()}",
         validator=vs.instance_of(str),
     )
     type: str = attr.ib(
         default=C.Pass, metadata={C.ALIAS: C.Type},
+    )
+    result: T.Optional[dict] = attr.ib(
+        default=None, metadata={C.ALIAS: C.Result},
     )
 
     _se_order = [
         # common
         C.Type,
         C.Comment,
+        # state specific
+        C.Result,
         # flow
         C.Next,
         C.End,
@@ -764,6 +779,11 @@ class Choice(
 class Succeed(
     _HasInputOutput,
 ):
+    """
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-succeed-state.html
+    """
     id: str = attr.ib(
         factory=lambda: f"{C.Succeed}-{short_uuid()}",
         validator=vs.instance_of(str),
@@ -789,6 +809,16 @@ class Succeed(
 class Fail(
     State,
 ):
+    """
+    :param cause: A custom failure string that you can specify for operational
+        or diagnostic purposes.
+    :param error: An error name that you can provide for operational
+        or diagnostic purposes.
+
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-fail-state.html
+    """
     id: str = attr.ib(
         factory=lambda: f"{C.Fail}-{short_uuid()}",
         validator=vs.instance_of(str),
