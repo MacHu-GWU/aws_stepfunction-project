@@ -26,6 +26,7 @@ class ChoiceRule(StepFunctionObject):
 
     - https://states-language.net/spec.html#choice-state, search keyword
         "Choice Rule"
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html#amazon-states-language-choice-state-rules
     """
     next: T.Optional[str] = attr.ib(
         default=None,
@@ -36,9 +37,18 @@ class ChoiceRule(StepFunctionObject):
     _next_state: T.Optional['StateType'] = attr.ib(default=None)
 
     def next_then(self, state: 'StateType'):
-        self.next = state.id
-        self._next_state = state
-        return self
+        if self._next_state is None:
+            self.next = state.id
+            self._next_state = state
+            return self
+        else:
+            raise exc.WorkflowError(
+                f"A 'ChoiceRule' can only call 'next_then' method once! "
+                "To continue workflow from the existing 'next' state "
+                f"{self._next_state._short_repr()}, "
+                f"use 'workflow.continue_from({self._next_state._short_repr()})"
+                f".next_then({state._short_repr()})' to continue orchestration."
+            )
 
     def _check_next(self):
         if self.next is None:

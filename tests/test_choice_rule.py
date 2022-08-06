@@ -112,7 +112,6 @@ class TestDataTestExpression:
             )
             cr._check_expected()
 
-
     def test_condition(self):
         var = CR.Var("$.key")
         for k in CR.Var.__dict__:
@@ -129,6 +128,14 @@ class TestDataTestExpression:
             ):
                 getattr(var, k)(1)
                 getattr(var, k)("$.")
+
+
+class TestChoiceRule:
+    def test_next_then(self):
+        with pytest.raises(exc.WorkflowError):
+            task1 = Task(id="t1")
+            task2 = Task(id="t2")
+            CR.Var("$.key").is_present().next_then(task1).next_then(task2)
 
 
 if __name__ == "__main__":

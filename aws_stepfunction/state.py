@@ -58,6 +58,9 @@ class State(StepFunctionObject):
             data[C.ResultPath] = None
         return data
 
+    def _short_repr(self) -> str:
+        return f"{self.type}(id={self.id!r})"
+
     # since json path attribute is so common,
     # we should create a validator for that
     def _check_json_path(self, attr: str, value: str):
