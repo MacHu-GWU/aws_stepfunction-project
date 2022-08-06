@@ -67,7 +67,7 @@ succeed = sfn.Succeed()
 fail = sfn.Fail()
 
 # ------------------------------------------------------------------------------
-# Step 3. Define some tasks and states
+# Step 3. Orchestrate the Workflow
 # ------------------------------------------------------------------------------
 # We use this "Human-language alike", "Pythonic", "Objective Oriented"
 # "Auto-complete empowered" code pattern to create a human-readable workflow
@@ -91,25 +91,25 @@ fail = sfn.Fail()
 )
 
 # ------------------------------------------------------------------------------
-# Step 4. Declare an instance of AWS StepFunction for AWS console
+# Step 4. Declare an instance of AWS State Machine for AWS console
 # ------------------------------------------------------------------------------
-# This is the metadata of the concrete AWS StepFunction resource
+# This is the metadata of the concrete AWS State Machine resource
 state_machine = sfn.StateMachine(
     name="stepfunction_quick_start",
     workflow=workflow,
-    role_arn="arn:aws:iam::669508176277:role/sanhe-for-everything-admin",
+    role_arn="arn:aws:iam::669508176277:role/state-machine-role",
 )
 
 # ------------------------------------------------------------------------------
-# Step 5. Deploy / Execute / Delete Step Function
+# Step 5. Deploy / Execute / Delete State Machine
 # ------------------------------------------------------------------------------
 # please only uncomment one line at a time
 
 # deploy (create / update)
 state_machine.deploy(bsm)
 
-# execute step function with custom payload
+# execute state machine with custom payload
 # step_function.execute(bsm, payload={"name": "alice"})
 
-# delete step function
+# delete state machine
 # step_function.delete(bsm)
