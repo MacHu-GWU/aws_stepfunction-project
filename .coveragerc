@@ -6,7 +6,8 @@ omit =
     aws_stepfunction/docs/*
     aws_stepfunction/actions/*
     aws_stepfunction/tests/*
-
+    aws_stepfunction/state_machine.py
+    
 [report]
 # Regexes for lines to exclude from consideration
 exclude_lines =
