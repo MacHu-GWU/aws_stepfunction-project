@@ -77,7 +77,7 @@ class Workflow(StepFunctionObject):
     _started: bool = attr.ib(default=False)
     _previous_state: T.Optional['StateType'] = attr.ib(default=None)
 
-    _se_order = [
+    _field_order = [
         C.Version,
         C.StartAt,
         C.Comment,

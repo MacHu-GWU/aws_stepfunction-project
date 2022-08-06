@@ -81,7 +81,7 @@ class StateMachine(StepFunctionObject):
         sfn_client = bsm.get_client(AwsServiceEnum.SFN)
         kwargs = self.to_dict()
         kwargs = self._to_alias(kwargs)
-        kwargs.pop("state_machine")
+        kwargs.pop("workflow")
         kwargs["definition"] = json.dumps(self.workflow.serialize())
         return sfn_client.create_state_machine(**kwargs)
 
@@ -97,7 +97,7 @@ class StateMachine(StepFunctionObject):
         kwargs["stateMachineArn"] = f"arn:aws:states:{bsm.aws_region}:{bsm.aws_account_id}:stateMachine:{self.name}"
         kwargs.pop("name")
         kwargs.pop("type")
-        kwargs.pop("state_machine")
+        kwargs.pop("workflow")
         kwargs["definition"] = json.dumps(self.workflow.serialize())
         return sfn_client.update_state_machine(**kwargs)
 

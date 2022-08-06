@@ -464,7 +464,7 @@ class BooleanExpression(ChoiceRule):
 class And(BooleanExpression):
     rules: T.List['ChoiceRule'] = attr.ib(factory=list)
 
-    _se_order = [
+    _field_order = [
         C.And,
         C.Next,
     ]
@@ -480,7 +480,7 @@ class And(BooleanExpression):
 class Or(BooleanExpression):
     rules: T.List['ChoiceRule'] = attr.ib(factory=list)
 
-    _se_order = [
+    _field_order = [
         C.Or,
         C.Next,
     ]
@@ -496,7 +496,7 @@ class Or(BooleanExpression):
 class Not(BooleanExpression):
     rule: T.Optional['ChoiceRule'] = attr.ib(default=None)
 
-    _se_order = [
+    _field_order = [
         C.Not,
         C.Next,
     ]
