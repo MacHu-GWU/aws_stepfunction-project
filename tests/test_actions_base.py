@@ -6,7 +6,7 @@ import pytest
 from rich import print as rprint
 from aws_stepfunction.actions.base import (
     _TaskContext, task_context,
-    _resolve_lambda_function_arn,
+    _resolve_resource_arn,
     lambda_invoke,
 )
 
@@ -19,11 +19,11 @@ def set_task_context():
 
 def test_resolve_lambda_function_arn():
     with pytest.raises(ValueError):
-        _resolve_lambda_function_arn(func_name="hello")
+        _resolve_resource_arn(resource_name="hello", resource_type="lambda", path="")
 
     task_context.aws_account_id = "111122223333"
     task_context.aws_region = "us-east-1"
-    arn = _resolve_lambda_function_arn(func_name="hello")
+    arn = _resolve_resource_arn(resource_name="hello", resource_type="lambda", path="")
     assert arn == "arn:aws:lambda:us-east-1:111122223333:hello"
 
 

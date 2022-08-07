@@ -81,23 +81,29 @@ class TaskResource:
     sns_publish = "arn:aws:states:::sns:publish"
     sns_publish_wait_for_call_back = "arn:aws:states:::sns:publish.waitForTaskToken"
 
+    batch_submit_job = "arn:aws:states:::batch:submitJob.sync"
+    batch_cancel_job = "arn:aws:states:::aws-sdk:batch:cancelJob"
+    batch_terminate_job = "arn:aws:states:::aws-sdk:batch:terminateJob"
+
+
+def _resolve_resource_arn(
+    resource_name: str,
+    resource_type: str,
+    path: str,
+    aws_account_id: T.Optional[str] = None,
+    aws_region: T.Optional[str] = None,
+) -> str:
+    if resource_name.startswith(f"arn:aws:{resource_type}:"):
+        return resource_name
+    aws_account_id = task_context._resolve_aws_account_id(aws_account_id)
+    aws_region = task_context._resolve_aws_region(aws_region)
+    return f"arn:aws:{resource_type}:{aws_region}:{aws_account_id}:{path}{resource_name}"
+
 
 # ------------------------------------------------------------------------------
 # AWS Lambda Task
 # ------------------------------------------------------------------------------
 __AWS_LAMBDA_TASK = None
-
-
-def _resolve_lambda_function_arn(
-    func_name: str,
-    aws_account_id: T.Optional[str] = None,
-    aws_region: T.Optional[str] = None,
-) -> str:
-    if func_name.startswith("arn:aws:lambda:"):
-        return func_name
-    aws_account_id = task_context._resolve_aws_account_id(aws_account_id)
-    aws_region = task_context._resolve_aws_region(aws_region)
-    return f"arn:aws:lambda:{aws_region}:{aws_account_id}:{func_name}"
 
 
 def lambda_invoke(
@@ -120,8 +126,10 @@ def lambda_invoke(
         output_path="$.Payload",
         parameters={
             "Payload.$": "$",
-            "FunctionName": _resolve_lambda_function_arn(
-                func_name=func_name,
+            "FunctionName": _resolve_resource_arn(
+                resource_name=func_name,
+                resource_type="lambda",
+                path="",
                 aws_account_id=aws_account_id,
                 aws_region=aws_region,
             ),
@@ -149,18 +157,6 @@ def lambda_invoke(
 __AWS_ECS_TASK = None
 
 
-def _resolve_ecs_task_def_arn(
-    task_def: str,
-    aws_account_id: T.Optional[str] = None,
-    aws_region: T.Optional[str] = None,
-) -> str:
-    if task_def.startswith("arn:aws:ecs:"):
-        return task_def
-    aws_account_id = task_context._resolve_aws_account_id(aws_account_id)
-    aws_region = task_context._resolve_aws_region(aws_region)
-    return f"arn:aws:ecs:{aws_region}:{aws_account_id}:task-definition/{task_def}"
-
-
 def ecs_run_task(
     task_def: str,
     sync: T.Optional[bool] = True,
@@ -183,8 +179,10 @@ def ecs_run_task(
         parameters={
             "LaunchType": "FARGATE",
             "Cluster": "arn:aws:ecs:REGION:ACCOUNT_ID:cluster/MyECSCluster",
-            "TaskDefinition": _resolve_ecs_task_def_arn(
-                task_def=task_def,
+            "TaskDefinition": _resolve_resource_arn(
+                resource_name=task_def,
+                resource_type="ecs",
+                path="task-definition/",
                 aws_account_id=aws_account_id,
                 aws_region=aws_region,
             ),
@@ -226,18 +224,6 @@ def glue_start_job_run(
 __AWS_SNS_TASK = None
 
 
-def _resolve_sns_topic_arn(
-    topic: str,
-    aws_account_id: T.Optional[str] = None,
-    aws_region: T.Optional[str] = None,
-) -> str:
-    if topic.startswith("arn:aws:sns:"):
-        return topic
-    aws_account_id = task_context._resolve_aws_account_id(aws_account_id)
-    aws_region = task_context._resolve_aws_region(aws_region)
-    return f"arn:aws:sns:{aws_region}:{aws_account_id}:{topic}"
-
-
 def sns_publish(
     topic: str,
     message: T.Optional[dict] = None,
@@ -256,8 +242,10 @@ def sns_publish(
         id=id,
         resource=resource,
         parameters={
-            "TopicArn": _resolve_sns_topic_arn(
-                topic=topic,
+            "TopicArn": _resolve_resource_arn(
+                resource_name=topic,
+                resource_type="sns",
+                path="",
                 aws_account_id=aws_account_id,
                 aws_region=aws_region,
             )
