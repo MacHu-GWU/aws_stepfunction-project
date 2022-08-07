@@ -52,11 +52,11 @@ class StateMachine(StepFunctionObject):
         ))
     )
 
-    def set_type_as_standard(self) -> 'StateMachine':
+    def set_type_as_standard(self) -> 'StateMachine':  # pragma: no cover
         self.type = "STANDARD"
         return self
 
-    def set_type_as_express(self) -> 'StateMachine':
+    def set_type_as_express(self) -> 'StateMachine':  # pragma: no cover
         self.type = "EXPRESS"
         return self
 
@@ -104,7 +104,7 @@ class StateMachine(StepFunctionObject):
         except Exception as e:
             if "StateMachineDoesNotExist" in e.__class__.__name__:
                 return False
-            else:
+            else:  # pragma: no cover
                 raise e
 
     def create(self, bsm: 'BotoSesManager'):
@@ -180,13 +180,14 @@ class StateMachine(StepFunctionObject):
         logger.info(f"execute state machine {state_machine_arn!r}")
         sfn_client = bsm.get_client(AwsServiceEnum.SFN)
         kwargs = dict(stateMachineArn=state_machine_arn)
-        if name is not None:
-            kwargs["name"] = name
         if payload is not None:
             kwargs["input"] = json.dumps(payload)
-        if trace_header is not None:
+        if name is not None:  # pragma: no cover
+            kwargs["name"] = name
+        if trace_header is not None:  # pragma: no cover
             kwargs["traceHeader"] = trace_header
-        if sync:
+
+        if sync:  # pragma: no cover
             res = sfn_client.start_sync_execution(**kwargs)
         else:
             res = sfn_client.start_execution(**kwargs)

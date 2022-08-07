@@ -109,7 +109,7 @@ state_machine = sfn.StateMachine(
 state_machine.deploy(bsm)
 
 # execute state machine with custom payload
-# step_function.execute(bsm, payload={"name": "alice"})
+# state_machine.execute(bsm, payload={"name": "alice"})
 
 # delete state machine
-# step_function.delete(bsm)
+# state_machine.delete(bsm)
