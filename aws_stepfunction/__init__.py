@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+#
+# Copyright 2022 Sanhe Hu <https://github.com/MacHu-GWU/aws_stepfunction-project>
 
 """
 """

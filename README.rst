@@ -57,7 +57,7 @@ Welcome to ``aws_stepfunction`` Documentation
 
 **Why this Library?**
 
-``aws_stepfunction`` is to provide AWS StepFunction developer a "smooth", "interruption free", "enjoyable" development experience.
+``aws_stepfunction`` provides AWS StepFunction developer a "smooth", "interruption free", "enjoyable" development experience.
 
 If your mind set matches most of the following, ``aws_stepfunction`` is the right tool for you:
 
