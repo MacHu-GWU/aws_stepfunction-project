@@ -81,6 +81,12 @@ class TaskResource:
 
     glue_start_job_run = "arn:aws:states:::glue:startJobRun.sync"
     glue_start_job_run_async = "arn:aws:states:::glue:startJobRun"
+    glue_batch_stop_job_run = "arn:aws:states:::aws-sdk:glue:batchStopJobRun"
+    glue_batch_stop_job_run_wait_for_callback = "arn:aws:states:::aws-sdk:glue:batchStopJobRun.waitForTaskToken"
+    glue_start_crawler = "arn:aws:states:::aws-sdk:glue:startCrawler"
+    glue_start_crawler_wait_for_callback = "arn:aws:states:::aws-sdk:glue:startCrawler.waitForTaskToken"
+    glue_stop_crawler = "arn:aws:states:::aws-sdk:glue:stopCrawler"
+    glue_stop_crawler_wait_for_callback = "arn:aws:states:::aws-sdk:glue:stopCrawler.waitForTaskToken"
 
     sns_publish = "arn:aws:states:::sns:publish"
     sns_publish_wait_for_callback = "arn:aws:states:::sns:publish.waitForTaskToken"
@@ -154,33 +160,6 @@ def lambda_invoke(
     )
     if sync is False:
         task_maker.parameters["InvocationType"] = "Event"
-    return task_maker.make()
-
-
-# ------------------------------------------------------------------------------
-# AWS Glue Task
-# ------------------------------------------------------------------------------
-__AWS_GLUE_TASK = None
-
-
-def glue_start_job_run(
-    job_name: str,
-    sync: T.Optional[bool] = True,
-    id: T.Optional[str] = None,
-) -> Task:
-    """
-    """
-    if sync:
-        resource = TaskResource.glue_start_job_run
-    else:
-        resource = TaskResource.glue_start_job_run_async
-    task_maker = TaskMaker(
-        id=id,
-        resource=resource,
-        parameters={
-            "JobName": job_name,
-        },
-    )
     return task_maker.make()
 
 

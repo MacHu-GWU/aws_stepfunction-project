@@ -3,7 +3,6 @@
 from .base import (
     task_context,
     lambda_invoke,
-    glue_start_job_run,
     sns_publish,
 )
 
@@ -17,4 +16,11 @@ from .aws_batch import (
     batch_submit_job,
     batch_cancel_job,
     batch_terminate_job,
+)
+
+from .aws_glue import (
+    glue_start_job_run,
+    glue_batch_stop_job_run,
+    glue_start_crawler,
+    glue_stop_crawler,
 )
