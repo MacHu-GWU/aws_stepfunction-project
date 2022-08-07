@@ -4,7 +4,7 @@ Release and Version History
 ==============================================================================
 
 
-0.0.3 (TODO)
+0.0.4 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
@@ -13,6 +13,28 @@ Release and Version History
 **Bugfixes**
 
 **Miscellaneous**
+
+
+0.0.3 (TODO)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- Add the following canned actions:
+    - :func:`~aws_stepfunction.actions.lambda_invoke`
+    - :func:`~aws_stepfunction.actions.ecs_run_task`
+    - :func:`~aws_stepfunction.actions.ecs_start_task`
+    - :func:`~aws_stepfunction.actions.ecs_stop_task`
+    - :func:`~aws_stepfunction.actions.batch_submit_job`
+    - :func:`~aws_stepfunction.actions.batch_cancel_job`
+    - :func:`~aws_stepfunction.actions.batch_terminate_job`
+    - :func:`~aws_stepfunction.actions.glue_start_job_run`
+    - :func:`~aws_stepfunction.actions.glue_batch_stop_job_run`
+    - :func:`~aws_stepfunction.actions.glue_start_crawler`
+    - :func:`~aws_stepfunction.actions.glue_stop_crawler`
+    - :func:`~aws_stepfunction.actions.sns_publish`
+    - :func:`~aws_stepfunction.actions.sns_publish_batch`
+    - :func:`~aws_stepfunction.actions.sqs_send_message`
+    - :func:`~aws_stepfunction.actions.sqs_send_message_batch`
 
 
 0.0.2 (2022-08-06)
