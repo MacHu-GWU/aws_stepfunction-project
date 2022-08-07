@@ -69,21 +69,23 @@ __TASK_RESOURCE = None
 
 class TaskResource:
     lambda_invoke = "arn:aws:states:::lambda:invoke"
-    lambda_invoke_wait_for_call_back = "arn:aws:states:::lambda:invoke.waitForTaskToken"
+    lambda_invoke_wait_for_callback = "arn:aws:states:::lambda:invoke.waitForTaskToken"
 
     ecs_run_task = "arn:aws:states:::ecs:runTask.sync"
     ecs_run_task_async = "arn:aws:states:::ecs:runTask"
-    ecs_run_task_wait_for_call_back = "arn:aws:states:::ecs:runTask.waitForTaskToken"
+    ecs_run_task_wait_for_callback = "arn:aws:states:::ecs:runTask.waitForTaskToken"
 
     glue_start_job_run = "arn:aws:states:::glue:startJobRun.sync"
     glue_start_job_run_async = "arn:aws:states:::glue:startJobRun"
 
     sns_publish = "arn:aws:states:::sns:publish"
-    sns_publish_wait_for_call_back = "arn:aws:states:::sns:publish.waitForTaskToken"
+    sns_publish_wait_for_callback = "arn:aws:states:::sns:publish.waitForTaskToken"
 
     batch_submit_job = "arn:aws:states:::batch:submitJob.sync"
     batch_cancel_job = "arn:aws:states:::aws-sdk:batch:cancelJob"
+    batch_cancel_job_wait_for_callback = "arn:aws:states:::aws-sdk:batch:cancelJob.waitForTaskToken"
     batch_terminate_job = "arn:aws:states:::aws-sdk:batch:terminateJob"
+    batch_terminate_job_wait_for_callback = "arn:aws:states:::aws-sdk:batch:terminateJob.waitForTaskToken"
 
 
 def _resolve_resource_arn(
@@ -117,7 +119,7 @@ def lambda_invoke(
     """
     """
     if wait_for_call_back is True:
-        resource = TaskResource.lambda_invoke_wait_for_call_back
+        resource = TaskResource.lambda_invoke_wait_for_callback
     else:
         resource = TaskResource.lambda_invoke
     task_maker = TaskMaker(
@@ -168,7 +170,7 @@ def ecs_run_task(
     """
     """
     if wait_for_call_back is True:
-        resource = TaskResource.ecs_run_task_wait_for_call_back
+        resource = TaskResource.ecs_run_task_wait_for_callback
     elif sync:
         resource = TaskResource.ecs_run_task
     else:
@@ -235,7 +237,7 @@ def sns_publish(
     """
     """
     if wait_for_call_back is True:
-        resource = TaskResource.sns_publish_wait_for_call_back
+        resource = TaskResource.sns_publish_wait_for_callback
     else:
         resource = TaskResource.sns_publish
     task_maker = TaskMaker(
