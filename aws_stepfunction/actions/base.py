@@ -74,6 +74,10 @@ class TaskResource:
     ecs_run_task = "arn:aws:states:::ecs:runTask.sync"
     ecs_run_task_async = "arn:aws:states:::ecs:runTask"
     ecs_run_task_wait_for_callback = "arn:aws:states:::ecs:runTask.waitForTaskToken"
+    ecs_start_task = "arn:aws:states:::aws-sdk:ecs:startTask.waitForTaskToken"
+    ecs_start_task_wait_for_callback = "arn:aws:states:::aws-sdk:ecs:startTask.waitForTaskToken"
+    ecs_stop_task = "arn:aws:states:::aws-sdk:ecs:stopTask"
+    ecs_stop_task_wait_for_callback = "arn:aws:states:::aws-sdk:ecs:stopTask"
 
     glue_start_job_run = "arn:aws:states:::glue:startJobRun.sync"
     glue_start_job_run_async = "arn:aws:states:::glue:startJobRun"
@@ -150,46 +154,6 @@ def lambda_invoke(
     )
     if sync is False:
         task_maker.parameters["InvocationType"] = "Event"
-    return task_maker.make()
-
-
-# ------------------------------------------------------------------------------
-# AWS ECS Task
-# ------------------------------------------------------------------------------
-__AWS_ECS_TASK = None
-
-
-def ecs_run_task(
-    task_def: str,
-    sync: T.Optional[bool] = True,
-    wait_for_call_back: T.Optional[bool] = False,
-    id: T.Optional[str] = None,
-    aws_account_id: T.Optional[str] = None,
-    aws_region: T.Optional[str] = None,
-) -> Task:
-    """
-    """
-    if wait_for_call_back is True:
-        resource = TaskResource.ecs_run_task_wait_for_callback
-    elif sync:
-        resource = TaskResource.ecs_run_task
-    else:
-        resource = TaskResource.ecs_run_task_async
-    task_maker = TaskMaker(
-        id=id,
-        resource=resource,
-        parameters={
-            "LaunchType": "FARGATE",
-            "Cluster": "arn:aws:ecs:REGION:ACCOUNT_ID:cluster/MyECSCluster",
-            "TaskDefinition": _resolve_resource_arn(
-                resource_name=task_def,
-                resource_type="ecs",
-                path="task-definition/",
-                aws_account_id=aws_account_id,
-                aws_region=aws_region,
-            ),
-        },
-    )
     return task_maker.make()
 
 
