@@ -529,6 +529,17 @@ class Parallel(
     _HasRetryCatch,
 ):
     """
+    The Parallel state ``("Type": "Parallel")`` can be used to create
+    parallel branches of execution in your state machine.
+
+    In addition to the common state fields, Parallel states include
+    these additional fields.
+
+    :param branches: An array of objects that specify state machines
+        to execute in parallel. Each such state machine object
+        must have fields named States and StartAt, whose meanings
+        are exactly like those in the top level of a state machine.
+
     Reference:
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-parallel-state.html
@@ -601,6 +612,29 @@ class Map(
     _HasResultPath,
     _HasRetryCatch,
 ):
+    """
+    The Map state ``("Type": "Map")`` can be used to run a set of steps
+    for each element of an input array. While the Parallel state executes
+    multiple branches of steps using the same input, a Map state will execute
+    the same steps for multiple entries of an array in the state input.
+
+    :param iterator: The Iterator field’s value is an object that defines
+        a state machine which will process each element of the array.
+    :param items_path: The ItemsPath field’s value is a reference path
+        identifying where in the effective input the array field is found.
+        For more information, see ItemsPath. States within an Iterator field
+        can only transition to each other, and no state outside the Iterator
+        field can transition to a state within it. If any iteration fails,
+        entire Map state fails, and all iterations are terminated.
+    :param max_concurrency: The MaxConcurrencyfield’s value is an integer
+        that provides an upper bound on how many invocations of the Iterator
+        may run in parallel. For instance, a MaxConcurrency value of 10
+        will limit your Map state to 10 concurrent iterations running at one time.
+
+    Reference:
+
+    - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-map-state.html
+    """
     id: str = attr.ib(
         factory=lambda: f"{C.Map}-{short_uuid()}",
         validator=vs.instance_of(str),
@@ -819,6 +853,16 @@ class Choice(
     _HasInputOutput
 ):
     """
+    A Choice state ``("Type": "Choice")`` adds branching logic to a state machine.
+
+    In addition to most of the common state fields, Choice states
+    introduce the following additional fields.
+
+    :param choices: An array of Choice Rules that determines which state
+        the state machine transitions to next.
+    :param default: The name of the state to transition to if none of
+        the transitions in Choices is taken.
+
     Reference:
 
     - https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-choice-state.html

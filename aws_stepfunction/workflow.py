@@ -85,7 +85,7 @@ class Workflow(StepFunctionObject):
         """
         Add a new state to this workflow.
 
-        :rtype: indicate whether a new state is added
+        :return: indicate whether a new state is added
         """
         if state.id in self._states:
             if ignore_exists is False:
@@ -107,7 +107,7 @@ class Workflow(StepFunctionObject):
         """
         Remove a state from workflow.
 
-        :rtype: indicate whether a state is removed
+        :return: indicate whether a state is removed
         """
         if state.id not in self._states:
             if ignore_not_exists is False:
@@ -254,7 +254,12 @@ class Workflow(StepFunctionObject):
         id: T.Optional[str] = None,
     ) -> 'Workflow':
         """
+        Create a :class:`~aws_stepfunction.state.Parallel` state
+        and set it as the next.
 
+        You definitely can manually create a ``Parallel`` state and pass to
+        :meth:`next_then`. However, it damages the code readability
+        and NOT RECOMMENDED.
         """
         self._check_started()
         parallel = self._parallel(branches=branches, id=id)
@@ -367,7 +372,8 @@ class Workflow(StepFunctionObject):
         timestamp_path: T.Optional[str] = None,
     ) -> 'Workflow':
         """
-        Create a 'Wait' state and set it as the next.
+        Create a :class:`~aws_stepfunction.state.Wait` state
+        and set it as the next.
         """
         kwargs = dict(
             seconds=seconds,
@@ -396,7 +402,8 @@ class Workflow(StepFunctionObject):
         id: T.Optional[str] = None,
     ) -> 'Workflow':
         """
-        Create a 'Succeed' state and set it as the next.
+        Create a :class:`~aws_stepfunction.state.Succeed` state
+        and set it as the next.
         """
         kwargs = dict()
         if id is None:
@@ -422,7 +429,8 @@ class Workflow(StepFunctionObject):
         id: T.Optional[str] = None,
     ) -> 'Workflow':
         """
-        Create a 'Fail' state and set it as the next.
+        Create a :class:`~aws_stepfunction.state.Fail` state
+        and set it as the next.
         """
         kwargs = dict(cause=cause, error=error)
         if id is None:

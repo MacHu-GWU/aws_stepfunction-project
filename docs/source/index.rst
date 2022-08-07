@@ -10,11 +10,13 @@ Release v\ |release| (:ref:`What's new? <release_history>`).
 Table of Content
 ------------------------------------------------------------------------------
 
-
-
-
-.. autotoctree::
+.. toctree::
     :maxdepth: 1
+
+    02-Examples/01-Quick-Start/01-quick-start
+    02-Examples/02-Logic-Flow/02-logic-flow
+    02-Examples/03-Input-Output-Data-Handling/03-input-output-data-handling.ipynb
+
 
 .. include:: ../../AUTHORS.rst
 
