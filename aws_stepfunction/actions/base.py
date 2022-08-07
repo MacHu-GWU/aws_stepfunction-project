@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+"""
+
+"""
+
 import typing as T
 import attr
 from ..state import Task, Retry, Catch
@@ -92,6 +96,11 @@ class TaskResource:
     sns_publish_wait_for_callback = "arn:aws:states:::sns:publish.waitForTaskToken"
     sns_publish_batch = "arn:aws:states:::aws-sdk:sns:publishBatch"
     sns_publish_batch_wait_for_callback = "arn:aws:states:::aws-sdk:sns:publishBatch.waitForTaskToken"
+
+    sqs_send_message = "arn:aws:states:::sqs:sendMessage"
+    sqs_send_message_wait_for_callback = "arn:aws:states:::sqs:sendMessage.waitForTaskToken"
+    sqs_send_message_batch = "arn:aws:states:::sqs:sendMessageBatch"
+    sqs_send_message_batch_wait_for_callback = "arn:aws:states:::sqs:sendMessageBatch.waitForTaskToken"
 
     batch_submit_job = "arn:aws:states:::batch:submitJob.sync"
     batch_cancel_job = "arn:aws:states:::aws-sdk:batch:cancelJob"
