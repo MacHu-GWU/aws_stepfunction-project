@@ -15,7 +15,7 @@ Release and Version History
 **Miscellaneous**
 
 
-0.0.3 (TODO)
+0.0.3 (2022-08-07)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
