@@ -90,6 +90,8 @@ class TaskResource:
 
     sns_publish = "arn:aws:states:::sns:publish"
     sns_publish_wait_for_callback = "arn:aws:states:::sns:publish.waitForTaskToken"
+    sns_publish_batch = "arn:aws:states:::aws-sdk:sns:publishBatch"
+    sns_publish_batch_wait_for_callback = "arn:aws:states:::aws-sdk:sns:publishBatch.waitForTaskToken"
 
     batch_submit_job = "arn:aws:states:::batch:submitJob.sync"
     batch_cancel_job = "arn:aws:states:::aws-sdk:batch:cancelJob"
@@ -110,43 +112,3 @@ def _resolve_resource_arn(
     aws_account_id = task_context._resolve_aws_account_id(aws_account_id)
     aws_region = task_context._resolve_aws_region(aws_region)
     return f"arn:aws:{resource_type}:{aws_region}:{aws_account_id}:{path}{resource_name}"
-
-
-# ------------------------------------------------------------------------------
-# AWS SNS Task
-# ------------------------------------------------------------------------------
-__AWS_SNS_TASK = None
-
-
-def sns_publish(
-    topic: str,
-    message: T.Optional[dict] = None,
-    wait_for_call_back: T.Optional[bool] = False,
-    id: T.Optional[str] = None,
-    aws_account_id: T.Optional[str] = None,
-    aws_region: T.Optional[str] = None,
-) -> Task:
-    """
-    """
-    if wait_for_call_back is True:
-        resource = TaskResource.sns_publish_wait_for_callback
-    else:
-        resource = TaskResource.sns_publish
-    task_maker = TaskMaker(
-        id=id,
-        resource=resource,
-        parameters={
-            "TopicArn": _resolve_resource_arn(
-                resource_name=topic,
-                resource_type="sns",
-                path="",
-                aws_account_id=aws_account_id,
-                aws_region=aws_region,
-            )
-        },
-    )
-    if message is None:
-        task_maker.parameters["Message.$"] = "$"
-    else:
-        task_maker.parameters["Message"] = message
-    return task_maker.make()
