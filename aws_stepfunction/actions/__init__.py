@@ -2,8 +2,11 @@
 
 from .base import (
     task_context,
-    lambda_invoke,
     sns_publish,
+)
+
+from. aws_lambda import (
+    lambda_invoke,
 )
 
 from .aws_ecs import (
