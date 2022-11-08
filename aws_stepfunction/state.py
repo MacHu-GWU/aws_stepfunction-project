@@ -80,6 +80,9 @@ class State(StepFunctionObject):
         if value is not None:
             self._check_json_path(attr, value)
 
+    def _is_magic(self) -> bool:
+        return False
+
 
 @attr.s
 class _HasNextOrEnd(State):

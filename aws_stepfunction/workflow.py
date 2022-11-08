@@ -321,7 +321,15 @@ class Workflow(StepFunctionObject):
         id: T.Optional[str] = None
     ):
         """
+        Example:
 
+        .. code-block:: python
+
+            workflow.start_from_choice(
+                # this is chocies
+                [
+                ]
+            )
         """
         choice = self._choice(
             choices=choices,
@@ -492,6 +500,7 @@ class Workflow(StepFunctionObject):
             C.States: {
                 state_id: state.serialize()
                 for state_id, state in self._states.items()
+                if state._is_magic() is False
             },
         }
 
