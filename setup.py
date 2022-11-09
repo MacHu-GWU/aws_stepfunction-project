@@ -154,6 +154,11 @@ if __name__ == "__main__":
     EXTRA_REQUIRE = dict()
 
     try:
+        EXTRA_REQUIRE["dev"] = read_requirements_file("requirements-dev.txt")
+    except:
+        print("'requirements-dev.txt' not found!")
+
+    try:
         EXTRA_REQUIRE["tests"] = read_requirements_file("requirements-test.txt")
     except:
         print("'requirements-test.txt' not found!")
