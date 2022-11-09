@@ -33,6 +33,31 @@ class BotoMan:
     bsm: BSM = attr.ib()
 
     @property
+    def default_s3_bucket_artifacts(self) -> str:
+        """
+        The default s3 bucket that stores the temporary artifacts.
+        """
+        return f"{self.bsm.aws_account_id}-{self.bsm.aws_region}-aws-stepfunction-python-sdk"
+
+    @property
+    def default_s3_bucket_artifacts_prefix(self) -> str:
+        return "aws-stepfunction-python-sdk"
+
+    @property
+    def default_iam_role_magic_task(self) -> str:
+        """
+        The default iam role for magic task lambda function.
+        """
+        return "aws-stepfunction-python-sdk-magic-task-role"
+
+    @property
+    def default_iam_role_arn_magic_task(self) -> str:
+        """
+        The default iam role arn for magic task lambda function.
+        """
+        return f"arn:aws:iam::{self.bsm.aws_account_id}:role/{self.default_iam_role_magic_task}"
+
+    @property
     def sfn_client(self):
         return self.bsm.get_client(AwsServiceEnum.SFN)
 
@@ -98,7 +123,7 @@ class BotoMan:
             response = self.iam_client.get_role(RoleName=name)
             return {
                 dct["Key"]: dct["Value"]
-                for dct in response.get("Tags", [])
+                for dct in response["Role"].get("Tags", [])
             }
         except Exception as e:
             if self._iam_role_not_exists_message_pattern in str(e):
