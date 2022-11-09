@@ -1,13 +1,103 @@
 # -*- coding: utf-8 -*-
 
 """
-TODO, replace this logger with a more advanced version.
+Logging utilities.
 """
 
+import logging
+import contextlib
 
-class Logger:
-    def info(self, msg: str):
-        print(msg)
+DEFAULT_STREAM_FORMAT = "%(message)s"
 
 
-logger = Logger()
+def set_stream_handler(
+    logger,
+    stream_level,
+    stream_format,
+):
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(stream_level)
+    stream_handler.setFormatter(logging.Formatter(stream_format))
+    logger.addHandler(stream_handler)
+
+
+class BaseLogger(object):
+    """
+    A base class for logger constructor.
+    """
+
+    def __init__(self, name=None, **kwargs):
+        self.logger = logging.getLogger(name)
+        self.tab = " " * 4
+        self.enable = True
+        self._handler_cache = list()
+
+    def _indent(self, msg, indent):
+        return "%s%s" % (self.tab * indent, msg)
+
+    def debug(self, msg, indent=0, **kwargs):
+        return self.logger.debug(self._indent(msg, indent), **kwargs)
+
+    def info(self, msg, indent=0, **kwargs):
+        return self.logger.info(self._indent(msg, indent), **kwargs)
+
+    def warning(self, msg, indent=0, **kwargs):
+        return self.logger.warning(self._indent(msg, indent), **kwargs)
+
+    def error(self, msg, indent=0, **kwargs):
+        return self.logger.error(self._indent(msg, indent), **kwargs)
+
+    def critical(self, msg, indent=0, **kwargs):
+        return self.logger.critical(self._indent(msg, indent), **kwargs)
+
+    def remove_all_handler(self):
+        """
+        Unlink the file handler association.
+        """
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+            self._handler_cache.append(handler)
+
+    def recover_all_handler(self):
+        """
+        Relink the file handler association you just removed.
+        """
+        for handler in self._handler_cache:
+            self.logger.addHandler(handler)
+        self._handler_cache = list()
+
+    @contextlib.contextmanager
+    def temp_disable(self, disable=True, *args, **kwargs):
+        if disable is True:
+            self.remove_all_handler()
+        try:
+            yield self
+        finally:
+            if disable is True:
+                self.recover_all_handler()
+
+
+class StreamOnlyLogger(BaseLogger):
+    """
+    This logger only print message to console, and not write log to file.
+
+    :param stream_level: level above this will be streamed.
+    :param stream_format: log information format.
+    """
+
+    def __init__(
+        self,
+        name=None,
+        stream_level=logging.INFO,
+        stream_format=DEFAULT_STREAM_FORMAT,
+    ):
+        super(StreamOnlyLogger, self).__init__(name)
+
+        # Set Logging Level
+        self.logger.setLevel(logging.DEBUG)
+
+        # Set Stream Handler
+        set_stream_handler(self.logger, stream_level, stream_format)
+
+
+logger = StreamOnlyLogger()
