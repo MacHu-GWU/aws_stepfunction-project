@@ -500,7 +500,6 @@ class Workflow(StepFunctionObject):
             C.States: {
                 state_id: state.serialize()
                 for state_id, state in self._states.items()
-                if state._is_magic() is False
             },
         }
 

@@ -119,4 +119,4 @@ class StreamOnlyLogger(BaseLogger):
         set_stream_handler(self.logger, stream_level, stream_format)
 
 
-logger = StreamOnlyLogger()
+logger = StreamOnlyLogger(name="aws_stepfunction")

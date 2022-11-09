@@ -4,11 +4,26 @@ Release and Version History
 ==============================================================================
 
 
-0.0.4 (TODO)
+0.0.5 (TODO)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
 **Minor Improvements**
+
+**Bugfixes**
+
+**Miscellaneous**
+
+
+0.0.4 (TODO)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+**Features and Improvements**
+
+- add magic task for better Input/Output handling
+
+**Minor Improvements**
+
+- add better logging
 
 **Bugfixes**
 

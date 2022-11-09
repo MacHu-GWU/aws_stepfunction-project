@@ -170,6 +170,7 @@ class StateMachine(StepFunctionObject):
         logger.info(f"  done, exam at: {self.get_state_machine_console_url(bsm)}")
         return res
 
+    @logger.decorator
     def execute(
         self,
         bsm: 'BotoSesManager',
@@ -219,7 +220,9 @@ class StateMachine(StepFunctionObject):
         logger.info(f"  preview at: {execution_console_url}")
         return res
 
+    @logger.decorator
     def deploy(self, bsm: 'BotoSesManager') -> dict:
+        self._deploy_magic(bsm)
         logger.info(
             f"deploy state machine to {self.get_state_machine_arn(bsm)!r} ..."
         )
@@ -245,43 +248,12 @@ class StateMachine(StepFunctionObject):
         """
         return slugify(self.name)
 
-    def _get_stack_status(self, bsm: 'BotoSesManager') -> str:
-        """
-        Ref:
-
-        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#stack
-        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#CloudFormation.Client.describe_stacks
-        """
-        cf_client = bsm.get_client(AwsServiceEnum.CloudFormation)
-        stack = bsm.boto_ses.resource("cloudformation").Stack(self._stack_name)
-        # "'CREATE_IN_PROGRESS'|'CREATE_FAILED'|'CREATE_COMPLETE'|'ROLLBACK_IN_PROGRESS'|'ROLLBACK_FAILED'|'ROLLBACK_COMPLETE'|'DELETE_IN_PROGRESS'|'DELETE_FAILED'|'DELETE_COMPLETE'|'UPDATE_IN_PROGRESS'|'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS'|'UPDATE_COMPLETE'|'UPDATE_FAILED'|'UPDATE_ROLLBACK_IN_PROGRESS'|'UPDATE_ROLLBACK_FAILED'|'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS'|'UPDATE_ROLLBACK_COMPLETE'|'REVIEW_IN_PROGRESS'|'IMPORT_IN_PROGRESS'|'IMPORT_COMPLETE'|'IMPORT_ROLLBACK_IN_PROGRESS'|'IMPORT_ROLLBACK_FAILED'|'IMPORT_ROLLBACK_COMPLETE',
-        return stack.stack_status
-
-    def _wait_stack_until_success(
-        self,
-        bsm: 'BotoSesManager',
-        period: int = 1,
-        retry: int = 3,
-    ):
-        for ith in range(retry):
-            print(f"wait {self._stack_name!r} stack to complete, elapsed {ith * period} ...")
-            time.sleep(period)
-            stack_status = self._get_stack_status(bsm)
-            if stack_status in [
-                "CREATE_COMPLETE",
-                "UPDATE_COMPLETE",
-                "DELETE_COMPLETE",
-            ]:
-                return
-        raise TimeoutError(
-            f"the cloudformation stack never reach success state, "
-            f"timed out after {period * retry} seconds"
-        )
-
+    @logger.decorator
     def _deploy_magic(self, bsm: 'BotoSesManager'):
         boto_man = BotoMan(bsm=bsm)
 
         # detect whether the magic task is used
+        logger.info("detect whether the magic task is used ...")
         io_handler_task_list: T.List[IOHandlerTask] = list()
         for state_id, state in self.workflow._states.items():
             if state._is_magic():
@@ -289,6 +261,10 @@ class StateMachine(StepFunctionObject):
                     io_handler_task_list.append(state)
 
         has_magic_task: bool = len(io_handler_task_list) > 0
+        if has_magic_task:
+            logger.info("yes", 1)
+        else:
+            logger.info("no", 1)
 
         # First create the necessary S3 bucket,
         tpl = cf.Template()
@@ -299,6 +275,8 @@ class StateMachine(StepFunctionObject):
         DEFAULT_CREATE_BY = "aws-stepfunction-python-sdk"
 
         if has_magic_task:
+            logger.info("identify necessary S3 bucket and IAM role ...")
+
             # create necessary S3 Bucket
             s3_bucket_set: T.Set[str] = set()
             for state in io_handler_task_list:
@@ -318,13 +296,14 @@ class StateMachine(StepFunctionObject):
                 except BucketNotExist:
                     need_to_declare_this_bucket = True
                     need_to_deploy_s3_and_iam = True
+                    logger.info(f"need to create S3 Bucket {bucket_name!r}", 1)
 
                 if need_to_declare_this_bucket:
                     s3_bucket = s3.Bucket(
                         f"S3Bucket{camel_case(bucket_name)}",
                         p_BucketName=bucket_name,
                     )
-                    print(f"declare S3 Bucket {s3_bucket.p_BucketName}")
+                    # logger.info(f"declare S3 Bucket {s3_bucket.p_BucketName}")
                     tpl.add(s3_bucket)
 
             # create necessary IAM role
@@ -343,6 +322,7 @@ class StateMachine(StepFunctionObject):
                 except IamRoleNotExist:
                     need_to_declare_default_iam_role = True
                     need_to_deploy_s3_and_iam = True
+                    logger.info(f"need to create IAM Role {boto_man.default_iam_role_magic_task!r}", 1)
 
                 if need_to_declare_default_iam_role:
                     default_role = iam.Role(
@@ -355,31 +335,24 @@ class StateMachine(StepFunctionObject):
                             cf.helpers.iam.AwsManagedPolicy.AWSLambdaBasicExecutionRole
                         ]
                     )
-                    print(f"declare IAM Role {default_role.p_RoleName}")
+                    # print(f"declare IAM Role {default_role.p_RoleName}")
                     tpl.add(default_role)
+            logger.info("done", 1)
 
         if need_to_deploy_s3_and_iam:
-            print("Deploy S3 and IAM")
-            tpl.batch_tagging(
-                overwrite_existing=True,
-                CreatedBy="aws-stepfunction-python-sdk",
+            self._deploy_cft(
+                bsm=bsm,
+                tpl=tpl,
+                msg="deploy S3 and IAM ...",
+                period=5,
+                retry=6,
             )
-            try:
-                env.deploy(
-                    template=tpl,
-                    stack_name=self._stack_name,
-                    include_iam=True,
-                )
-                self._wait_stack_until_success(bsm, period=5, retry=6)
-            except Exception as e:
-                if "No updates are to be performed" in str(e):
-                    print("no updates are to be performed")
-                else:
-                    raise e
 
+        logger.info("deploy Lambda Functions ...")
         context.attach_boto_session(bsm.boto_ses)
         dir_home = Path.home()
         dir_home_tmp = dir_home / "tmp"
+        logger.info("upload lambda deployment artifacts ...", 1)
         for state in io_handler_task_list:
             state: IOHandlerTask
             if state.lbd_role is None:
@@ -389,6 +362,7 @@ class StateMachine(StepFunctionObject):
                 state.lbd_code_s3_key = f"{boto_man.default_s3_bucket_artifacts_prefix}/{state.path_lbd_script.md5}.zip"
             s3path = S3Path(state.lbd_code_s3_bucket, state.lbd_code_s3_key)
             path = dir_home_tmp.joinpath(f"{state.path_lbd_script.md5}.zip")
+            logger.info(f"upload from {path} to {s3path.uri}", 2)
             state.path_lbd_script.make_zip_archive(
                 dst=path.abspath,
                 makedirs=True,
@@ -403,23 +377,60 @@ class StateMachine(StepFunctionObject):
                 overwrite_existing=True,
                 hash=state.path_lbd_script.md5,
             )
-            print(f"declare Lambda Function {lbd_func.p_FunctionName}")
+            logger.info(f"declare Lambda Function {lbd_func.p_FunctionName}", 1)
             tpl.add(lbd_func)
 
+        self._deploy_cft(
+            bsm=bsm,
+            tpl=tpl,
+            msg="deploy magic task Lambda Function ...",
+            period=5,
+            retry=6,
+        )
+
+    def _deploy_cft(
+        self,
+        bsm: BotoSesManager,
+        tpl: 'cf.Template',
+        msg: str,
+        period: int,
+        retry: int,
+    ):
+        """
+        A syntax sugar that deploy ``cottonformation.Template``.
+        """
+        logger.info(msg)
         tpl.batch_tagging(
             overwrite_existing=True,
             CreatedBy="aws-stepfunction-python-sdk",
         )
-        print("Deploy magic task lambda function ...")
+        env = cf.Env(bsm=bsm)
+        boto_man = BotoMan(bsm=bsm)
         try:
+            stack_console_url = (
+                f"https://console.aws.amazon.com/cloudformation/home?"
+                f"region={bsm.aws_region}#/stacks?"
+                f"filteringStatus=active&"
+                f"filteringText={self._stack_name}&"
+                f"viewNested=true&"
+                f"hideStacks=false&"
+                f"stackId="
+            )
+            logger.info(f"preview cloudformation stack status: {stack_console_url}", 1)
             env.deploy(
                 template=tpl,
                 stack_name=self._stack_name,
                 include_iam=True,
+                verbose=False,
             )
-            self._wait_stack_until_success(bsm, period=5, retry=6)
+            boto_man.wait_cloudformation_stack_success(
+                name=self._stack_name,
+                period=period,
+                retry=retry,
+            )
+            logger.info("done", 1)
         except Exception as e:
             if "No updates are to be performed" in str(e):
-                print("no updates are to be performed")
+                logger.info("no updates are to be performed", 1)
             else:
                 raise e

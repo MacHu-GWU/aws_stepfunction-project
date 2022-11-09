@@ -1,3 +1,4 @@
 attrs>=21.1.0
 sentinel>=1.0.0
 boto_session_manager>=0.0.4
+pathlib_mate>=1.0.0

@@ -4,8 +4,11 @@
 boto3 helpers
 """
 
+import time
 import attr
 from boto_session_manager import BotoSesManager as BSM, AwsServiceEnum
+
+from .logger import logger
 
 
 class StateMachineNotExist(Exception):
@@ -183,3 +186,50 @@ class BotoMan:
                 raise CloudFormationStackNotExist
             else:
                 raise e
+
+    def get_cloudformation_stack_status(self, name: str) -> str:
+        """
+        Get CloudFormation stack status.
+
+        possible status: 'CREATE_IN_PROGRESS'|'CREATE_FAILED'|'CREATE_COMPLETE'|'ROLLBACK_IN_PROGRESS'|'ROLLBACK_FAILED'|'ROLLBACK_COMPLETE'|'DELETE_IN_PROGRESS'|'DELETE_FAILED'|'DELETE_COMPLETE'|'UPDATE_IN_PROGRESS'|'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS'|'UPDATE_COMPLETE'|'UPDATE_FAILED'|'UPDATE_ROLLBACK_IN_PROGRESS'|'UPDATE_ROLLBACK_FAILED'|'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS'|'UPDATE_ROLLBACK_COMPLETE'|'REVIEW_IN_PROGRESS'|'IMPORT_IN_PROGRESS'|'IMPORT_COMPLETE'|'IMPORT_ROLLBACK_IN_PROGRESS'|'IMPORT_ROLLBACK_FAILED'|'IMPORT_ROLLBACK_COMPLETE'
+
+        Ref:
+
+        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#stack
+        - https://boto3.amazonaws.com/v1/documentation/api/latest/reference/services/cloudformation.html#CloudFormation.Client.describe_stacks
+        """
+        try:
+            response = self.cf_client.describe_stacks(StackName=name)
+            return response["Stacks"][0]["StackStatus"]
+        except Exception as e:
+            if self._cloudformation_stack_not_exists_message_pattern in str(e):
+                raise CloudFormationStackNotExist
+            else:
+                raise e
+
+    @logger.decorator
+    def wait_cloudformation_stack_success(
+        self,
+        name: str,
+        period: int = 5,
+        retry: int = 2,
+        _indent: int = 0,
+    ):
+        """
+        Wait a cloudformation stack to reach "success" status.
+        """
+        logger.info(f"wait {name!r} stack to complete ... ", _indent)
+        for ith in range(retry):
+            logger.info(f"elapsed {ith * period} seconds ...", _indent + 1)
+            time.sleep(period)
+            stack_status = self.get_cloudformation_stack_status(name)
+            if stack_status in [
+                "CREATE_COMPLETE",
+                "UPDATE_COMPLETE",
+                "DELETE_COMPLETE",
+            ]:
+                return
+        raise TimeoutError(
+            f"the cloudformation stack never reach success state, "
+            f"timed out after {period * retry} seconds"
+        )
