@@ -13,11 +13,12 @@ Table of Content
 .. toctree::
     :maxdepth: 1
 
-    02-Examples/01-Quick-Start/01-quick-start
-    02-Examples/02-Logic-Flow/02-logic-flow
-    02-Examples/03-Input-Output-Data-Handling/03-input-output-data-handling
-    02-Examples/05-Deployment/05-deployment
+    02-Examples/01-Quick-Start/01-quick-start.ipynb
+    02-Examples/02-Logic-Flow/02-logic-flow.ipynb
+    02-Examples/03-Input-Output-Data-Handling/03-input-output-data-handling.ipynb
+    02-Examples/05-Deployment/05-deployment.ipynb
     02-Examples/06-Canned-Actions/06-canned-actions.ipynb
+    02-Examples/07-Magic-Task/07-magic-task.ipynb
 
 
 .. include:: ../../AUTHORS.rst
