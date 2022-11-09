@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-import os
+import json
 import aws_stepfunction as sfn
-from aws_stepfunction.magic import LambdaTask, IOHandlerTask
+from aws_stepfunction.magic import LambdaTask
 
 from boto_session_manager import BotoSesManager
 from rich import print as rprint
@@ -105,13 +105,27 @@ state_machine = sfn.StateMachine(
     workflow=workflow,
     role_arn="arn:aws:iam::669508176277:role/sanhe-for-everything-admin",
 )
+state_machine.set_type_as_express()
 
-state_machine.deploy(bsm)
-#
-# result = state_machine.execute(
-#     bsm,
-#     payload={"order_id": "order-1"},
-# )
+deploy_result = state_machine.deploy(bsm, verbose=True)
+
+execute_result = state_machine.execute(
+    bsm,
+    payload={"order_id": "order-1"},
+    sync=True,
+)
+
+input = json.loads(execute_result["input"])
+output = json.loads(execute_result["output"])
+print(f"\ninput:\n")
+print(json.dumps(input))
+print(f"\noutput:\n")
+print(json.dumps(output))
+
+result = state_machine.execute(
+    bsm,
+    payload={"order_id": "order-1"},
+)
 
 #------------------------------------------------------------------------------
 # Clean up

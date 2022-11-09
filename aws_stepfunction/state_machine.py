@@ -396,16 +396,28 @@ class StateMachine(StepFunctionObject):
                 compress=True,
                 verbose=False,
             )
+            # Don't update the state object directly!
             if state.lbd_role is None:
-                state.lbd_role = boto_man.default_iam_role_arn_magic_task
+                lbd_role = boto_man.default_iam_role_arn_magic_task
+            else:
+                lbd_role = state.lbd_role
             if state.lbd_code_s3_bucket is None:
-                state.lbd_code_s3_bucket = boto_man.default_s3_bucket_artifacts
-                state.lbd_code_s3_key = f"{boto_man.default_s3_bucket_artifacts_prefix}/{path.md5}.zip"
-            s3path = S3Path(state.lbd_code_s3_bucket, state.lbd_code_s3_key)
+                lbd_code_s3_bucket = boto_man.default_s3_bucket_artifacts
+                lbd_code_s3_key = f"{boto_man.default_s3_bucket_artifacts_prefix}/{path.md5}.zip"
+            else:
+                lbd_code_s3_bucket = state.lbd_code_s3_bucket
+                lbd_code_s3_key = state.lbd_code_s3_key
+            s3path = S3Path(lbd_code_s3_bucket, lbd_code_s3_key)
             logger.info(f"upload from {path} to {s3path.uri}", 2)
             s3path.upload_file(path.abspath, overwrite=True)
 
-            lbd_func = state.lambda_function()
+            new_state = attr.evolve(
+                state,
+                lbd_role=lbd_role,
+                lbd_code_s3_bucket=lbd_code_s3_bucket,
+                lbd_code_s3_key=lbd_code_s3_key,
+            )
+            lbd_func = new_state.lambda_function()
             lbd_func.update_tags(
                 overwrite_existing=True,
                 hash=state.path_lbd_script.md5,
