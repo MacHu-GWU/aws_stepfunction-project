@@ -13,9 +13,17 @@ class MagicTask(Task):
 
 
 @attr.s
-class IOHandlerTask(MagicTask):
+class BaseLambdaTask(MagicTask):
+    """
+
+    :param lbd_handler: The lambda function handler name. It is the python module path to the
+        python function implementation.
+        See https://docs.aws.amazon.com/lambda/latest/dg/python-handler.html
+        for more information
+    """
     lbd_func_name: str = attr.ib(default=None)
-    lbd_script: str = attr.ib(default=None)
+    lbd_package: str = attr.ib(default=None)
+    lbd_handler: str = attr.ib(default=None)
     lbd_aws_account_id = attr.ib(default=None)
     lbd_aws_region = attr.ib(default=None)
 
@@ -30,6 +38,69 @@ class IOHandlerTask(MagicTask):
         return True
 
     def __attrs_post_init__(self):
+        raise NotImplementedError
+
+    @property
+    def path_lbd_script(self) -> Path:
+        return Path(self.lbd_package).absolute()
+
+    def lambda_function(self) -> awslambda.Function:
+        """
+        Convert the task to cottonformation Resource declaration object.
+        """
+        return awslambda.Function(
+            self.lbd_func_name.replace("_", "").replace("-", ""),
+            p_FunctionName=self.lbd_func_name,
+            p_Runtime=self.lbd_runtime,
+            p_MemorySize=self.lbd_memory,
+            p_Timeout=self.lbd_timeout,
+            p_Handler=self.lbd_handler,
+            rp_Role=self.lbd_role,
+            rp_Code=awslambda.PropFunctionCode(
+                p_S3Bucket=self.lbd_code_s3_bucket,
+                p_S3Key=self.lbd_code_s3_key,
+            ),
+        )
+
+
+@attr.s
+class LambdaTask(BaseLambdaTask):
+    """
+    A magic task.
+    """
+
+    def __attrs_post_init__(self):
+        # convert the task to a 'lambda invoke' task.
+        self.resource = "arn:aws:states:::lambda:invoke"
+        self.output_path = "$.Payload"
+        self.parameters = {
+            "Payload.$": "$",
+            "FunctionName": (
+                f"arn:aws:lambda:{self.lbd_aws_region}:{self.lbd_aws_account_id}"
+                f":function:{self.lbd_func_name}"
+            ),
+        }
+        self.retry.extend([
+            (
+                Retry.new()
+                .with_interval_seconds(2)
+                .with_back_off_rate(2)
+                .with_max_attempts(3)
+                .if_lambda_service_error()
+                .if_lambda_aws_error()
+                .if_lambda_sdk_client_error()
+            )
+        ])
+
+
+@attr.s
+class IOHandlerTask(BaseLambdaTask):
+    """
+    A magic task that can handle input / output in a lambda function.
+    """
+
+    def __attrs_post_init__(self):
+        # convert the task to a 'lambda invoke' task.
         self.resource = "arn:aws:states:::lambda:invoke"
         self.output_path = "$.Payload"
         self.parameters = {
@@ -53,26 +124,3 @@ class IOHandlerTask(MagicTask):
                 .if_lambda_sdk_client_error()
             )
         ])
-
-    @property
-    def path_lbd_script(self) -> Path:
-        return Path(self.lbd_script).absolute()
-
-    @property
-    def lambda_handler(self) -> str:
-        return f"{Path(self.lbd_script).fname}.lambda_handler"
-
-    def lambda_function(self) -> awslambda.Function:
-        return awslambda.Function(
-            self.lbd_func_name.replace("_", "").replace("-", ""),
-            p_FunctionName=self.lbd_func_name,
-            p_Runtime=self.lbd_runtime,
-            p_MemorySize=self.lbd_memory,
-            p_Timeout=self.lbd_timeout,
-            p_Handler=self.lambda_handler,
-            rp_Role=self.lbd_role,
-            rp_Code=awslambda.PropFunctionCode(
-                p_S3Bucket=self.lbd_code_s3_bucket,
-                p_S3Key=self.lbd_code_s3_key,
-            ),
-        )

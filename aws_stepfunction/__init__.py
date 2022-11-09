@@ -32,5 +32,5 @@ try:
     from .actions import task_context
     from .state_machine import StateMachine
     from .constant import Constant
-except ImportError as e:
+except ImportError as e:  # pragma: no cover
     print(e)

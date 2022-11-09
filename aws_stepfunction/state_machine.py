@@ -13,6 +13,7 @@ import attr.validators as vs
 from pathlib_mate import Path
 from boto_session_manager import BotoSesManager, AwsServiceEnum
 
+from .state import Task, Parallel
 from .model import StepFunctionObject
 from .constant import Constant as C
 from .logger import logger
@@ -26,14 +27,17 @@ from .boto import (
     LambdaFunctionNotExist,
 )
 
+try:
+    from s3pathlib import S3Path, context
+    import cottonformation as cf
+    from cottonformation.res import s3, iam
+
+    from .magic.task import BaseLambdaTask
+except ImportError:
+    pass
+
 if T.TYPE_CHECKING:  # pragma: no cover
     from .workflow import Workflow
-
-from s3pathlib import S3Path, context
-import cottonformation as cf
-from cottonformation.res import s3, iam
-
-from .magic.task import MagicTask, IOHandlerTask
 
 
 @attr.s
@@ -254,13 +258,25 @@ class StateMachine(StepFunctionObject):
 
         # detect whether the magic task is used
         logger.info("detect whether the magic task is used ...")
-        io_handler_task_list: T.List[IOHandlerTask] = list()
-        for state_id, state in self.workflow._states.items():
-            if state._is_magic():
-                if isinstance(state, IOHandlerTask):
-                    io_handler_task_list.append(state)
 
-        has_magic_task: bool = len(io_handler_task_list) > 0
+        def iterate_task_state(workflow: 'Workflow') -> T.Iterable[Task]:
+            for _, state in workflow._states.items():
+                if isinstance(state, Task):
+                    yield state
+                elif isinstance(state, Parallel):
+                    for sub_workflow in state.branches:
+                        for state_ in iterate_task_state(sub_workflow):
+                            yield state_
+                else:
+                    pass
+
+        lbd_task_list: T.List[BaseLambdaTask] = list()
+        for state in iterate_task_state(self.workflow):
+            if state._is_magic():
+                if isinstance(state, BaseLambdaTask):
+                    lbd_task_list.append(state)
+
+        has_magic_task: bool = len(lbd_task_list) > 0
         if has_magic_task:
             logger.info("yes", 1)
         else:
@@ -268,7 +284,6 @@ class StateMachine(StepFunctionObject):
 
         # First create the necessary S3 bucket,
         tpl = cf.Template()
-        env = cf.Env(bsm=bsm)
 
         need_to_deploy_s3_and_iam = False
 
@@ -279,7 +294,7 @@ class StateMachine(StepFunctionObject):
 
             # create necessary S3 Bucket
             s3_bucket_set: T.Set[str] = set()
-            for state in io_handler_task_list:
+            for state in lbd_task_list:
                 if state.lbd_code_s3_bucket is None:
                     bucket_name = boto_man.default_s3_bucket_artifacts
                 else:
@@ -308,7 +323,7 @@ class StateMachine(StepFunctionObject):
 
             # create necessary IAM role
             need_default_iam_role = False
-            for state in io_handler_task_list:
+            for state in lbd_task_list:
                 if state.lbd_role is None:
                     need_default_iam_role = True
 
@@ -345,7 +360,7 @@ class StateMachine(StepFunctionObject):
                 tpl=tpl,
                 msg="deploy S3 and IAM ...",
                 period=5,
-                retry=6,
+                retry=12,
             )
 
         logger.info("deploy Lambda Functions ...")
@@ -353,23 +368,23 @@ class StateMachine(StepFunctionObject):
         dir_home = Path.home()
         dir_home_tmp = dir_home / "tmp"
         logger.info("upload lambda deployment artifacts ...", 1)
-        for state in io_handler_task_list:
-            state: IOHandlerTask
-            if state.lbd_role is None:
-                state.lbd_role = boto_man.default_iam_role_arn_magic_task
-            if state.lbd_code_s3_bucket is None:
-                state.lbd_code_s3_bucket = boto_man.default_s3_bucket_artifacts
-                state.lbd_code_s3_key = f"{boto_man.default_s3_bucket_artifacts_prefix}/{state.path_lbd_script.md5}.zip"
-            s3path = S3Path(state.lbd_code_s3_bucket, state.lbd_code_s3_key)
+        for state in lbd_task_list:
             path = dir_home_tmp.joinpath(f"{state.path_lbd_script.md5}.zip")
-            logger.info(f"upload from {path} to {s3path.uri}", 2)
             state.path_lbd_script.make_zip_archive(
                 dst=path.abspath,
                 makedirs=True,
+                include_dir=True,
                 overwrite=True,
                 compress=True,
                 verbose=False,
             )
+            if state.lbd_role is None:
+                state.lbd_role = boto_man.default_iam_role_arn_magic_task
+            if state.lbd_code_s3_bucket is None:
+                state.lbd_code_s3_bucket = boto_man.default_s3_bucket_artifacts
+                state.lbd_code_s3_key = f"{boto_man.default_s3_bucket_artifacts_prefix}/{path.md5}.zip"
+            s3path = S3Path(state.lbd_code_s3_bucket, state.lbd_code_s3_key)
+            logger.info(f"upload from {path} to {s3path.uri}", 2)
             s3path.upload_file(path.abspath, overwrite=True)
 
             lbd_func = state.lambda_function()
@@ -377,7 +392,7 @@ class StateMachine(StepFunctionObject):
                 overwrite_existing=True,
                 hash=state.path_lbd_script.md5,
             )
-            logger.info(f"declare Lambda Function {lbd_func.p_FunctionName}", 1)
+            logger.info(f"declare Lambda Function {lbd_func.p_FunctionName}", 2)
             tpl.add(lbd_func)
 
         self._deploy_cft(
@@ -385,7 +400,7 @@ class StateMachine(StepFunctionObject):
             tpl=tpl,
             msg="deploy magic task Lambda Function ...",
             period=5,
-            retry=6,
+            retry=12,
         )
 
     def _deploy_cft(
