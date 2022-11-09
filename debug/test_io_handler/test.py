@@ -59,11 +59,20 @@ task2b_2_get_ship_cost = LambdaTask(
     lbd_aws_region=bsm.aws_region,
 )
 
-task3_process_payment = LambdaTask(
-    id="Task3-Process-Payment",
-    lbd_func_name="aws_stepfunction_magic_task_demo-task3_process_payment",
-    lbd_package="s3_process_payment.py",
-    lbd_handler="s3_process_payment.lambda_handler",
+task3_find_balance = LambdaTask(
+    id="Task3-Find-Balance",
+    lbd_func_name="aws_stepfunction_magic_task_demo-task3_find_balance",
+    lbd_package="s3_find_balance.py",
+    lbd_handler="s3_find_balance.lambda_handler",
+    lbd_aws_account_id=bsm.aws_account_id,
+    lbd_aws_region=bsm.aws_region,
+)
+
+task4_process_payment = LambdaTask(
+    id="Task4-Process-Payment",
+    lbd_func_name="aws_stepfunction_magic_task_demo-task4_process_payment",
+    lbd_package="s4_process_payment.py",
+    lbd_handler="s4_process_payment.lambda_handler",
     lbd_aws_account_id=bsm.aws_account_id,
     lbd_aws_region=bsm.aws_region,
 )
@@ -82,7 +91,8 @@ task3_process_payment = LambdaTask(
             .end()
         ),
     ])
-    .next_then(task3_process_payment)
+    .next_then(task3_find_balance)
+    .next_then(task4_process_payment)
     .end()
 )
 
@@ -97,8 +107,12 @@ state_machine = sfn.StateMachine(
 )
 
 state_machine.deploy(bsm)
+#
+# result = state_machine.execute(
+#     bsm,
+#     payload={"order_id": "order-1"},
+# )
 
-result = state_machine.execute(
-    bsm,
-    payload={"order_id": "order-1"},
-)
+#------------------------------------------------------------------------------
+# Clean up
+#------------------------------------------------------------------------------

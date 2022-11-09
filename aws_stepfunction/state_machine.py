@@ -326,6 +326,8 @@ class StateMachine(StepFunctionObject):
             for state in lbd_task_list:
                 if state.lbd_role is None:
                     need_default_iam_role = True
+                    logger.info("we need a default IAM role for lambda function", 1)
+                    break
 
             if need_default_iam_role:
                 try:
