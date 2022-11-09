@@ -24,6 +24,7 @@ Release and Version History
 **Minor Improvements**
 
 - add better logging
+- add support to preview state machine execution
 
 **Bugfixes**
 

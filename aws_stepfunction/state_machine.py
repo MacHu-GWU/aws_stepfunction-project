@@ -81,6 +81,9 @@ class StateMachine(StepFunctionObject):
         self.type = "EXPRESS"
         return self
 
+    def is_express(self) -> bool:
+        return self.type == "EXPRESS"
+
     def _convert_tags(self) -> T.List[T.Dict[str, str]]:
         return [
             dict(key=key, value=value)
@@ -213,14 +216,27 @@ class StateMachine(StepFunctionObject):
             res = sfn_client.start_sync_execution(**kwargs)
         else:
             res = sfn_client.start_execution(**kwargs)
+
         execution_arn = res["executionArn"]
-        execution_id = execution_arn.split(":")[-1]
-        execution_console_url = (
-            f"https://{bsm.aws_region}.console.aws.amazon.com/states/"
-            f"home?region={bsm.aws_region}#/executions/details/"
-            f"arn:aws:states:{bsm.aws_region}:{bsm.aws_account_id}:"
-            f"execution:{self.name}:{execution_id}"
-        )
+
+        if self.is_express():
+            execution_id = ":".join(execution_arn.split(":")[-2:])
+            start_date_ts = int(res["startDate"].timestamp() * 1000)
+            execution_console_url = (
+                f"https://{bsm.aws_region}.console.aws.amazon.com/states/"
+                f"home?region={bsm.aws_region}#/express-executions/details/"
+                f"arn:aws:states:{bsm.aws_region}:{bsm.aws_account_id}:"
+                f"express:{self.name}:{execution_id}?startDate={start_date_ts}"
+            )
+        else:
+            execution_id = execution_arn.split(":")[-1]
+            execution_console_url = (
+                f"https://{bsm.aws_region}.console.aws.amazon.com/states/"
+                f"home?region={bsm.aws_region}#/v2/executions/details/"
+                f"arn:aws:states:{bsm.aws_region}:{bsm.aws_account_id}:"
+                f"execution:{self.name}:{execution_id}"
+            )
+
         logger.info(f"  preview at: {execution_console_url}")
         return res
 

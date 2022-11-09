@@ -11,6 +11,8 @@ sub packages and modules
     :maxdepth: 1
 
     actions <actions/__init__>
+    magic <magic/__init__>
+    boto <boto>
     choice_rule <choice_rule>
     constant <constant>
     exc <exc>
