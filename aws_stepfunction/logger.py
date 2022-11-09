@@ -4,7 +4,9 @@
 Logging utilities.
 """
 
+import typing as T
 import logging
+import functools
 import contextlib
 
 DEFAULT_STREAM_FORMAT = "%(message)s"
@@ -19,6 +21,10 @@ def set_stream_handler(
     stream_handler.setLevel(stream_level)
     stream_handler.setFormatter(logging.Formatter(stream_format))
     logger.addHandler(stream_handler)
+
+
+def decohints(decorator: T.Callable) -> T.Callable:
+    return decorator
 
 
 class BaseLogger(object):
@@ -75,6 +81,19 @@ class BaseLogger(object):
         finally:
             if disable is True:
                 self.recover_all_handler()
+
+    @decohints
+    def decorator(self, func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            if "verbose" in kwargs:
+                verbose = kwargs.pop("verbose")
+            else:
+                verbose = True
+            with self.temp_disable(disable=not verbose):
+                return func(*args, **kwargs)
+
+        return wrapper
 
 
 class StreamOnlyLogger(BaseLogger):
