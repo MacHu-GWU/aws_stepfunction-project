@@ -84,6 +84,19 @@ class BaseLogger(object):
 
     @decohints
     def decorator(self, func):
+        """
+        A decorator that allow you to use ``verbose`` parameter to temporarily
+        disable logging in the given function. (default is enabled)
+
+        Example::
+
+            @logger.decorator
+            def my_func(name):
+                logger.info(f"hello {name}!")
+
+            my_func("alice") # this will print "hello alice"
+            my_func("alice", verbose=False) # this will print nothing
+        """
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             if "verbose" in kwargs:

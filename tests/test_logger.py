@@ -20,6 +20,7 @@ class TestStreamLogger:
             logger.critical("critical")
 
     def test_decorator(self):
+        # you only see "hello alice"
         my_class = MyClass()
         my_class.hello(name="alice")
         my_class.hello(name="bob", verbose=False)

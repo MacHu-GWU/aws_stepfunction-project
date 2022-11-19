@@ -270,6 +270,9 @@ class StateMachine(StepFunctionObject):
 
     @logger.decorator
     def _deploy_magic(self, bsm: 'BotoSesManager'):
+        """
+        Deploy magic tasks (if available)
+        """
         boto_man = BotoMan(bsm=bsm)
 
         # detect whether the magic task is used

@@ -15,20 +15,20 @@ Release and Version History
 **Miscellaneous**
 
 
-0.0.4 (TODO)
+0.0.4 (2022-11-19)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 **Features and Improvements**
 
-- add magic task for better Input/Output handling
+- add **Magic Task** for better Input/Output handling
 
 **Minor Improvements**
 
 - add better logging
 - add support to preview state machine execution
 
-**Bugfixes**
-
 **Miscellaneous**
+
+- more documents
 
 
 0.0.3 (2022-08-07)

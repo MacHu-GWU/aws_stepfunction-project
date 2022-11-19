@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 """
-boto3 helpers
+boto3 helpers.
 """
 
 import time
@@ -33,6 +33,9 @@ class LambdaFunctionNotExist(Exception):
 
 @attr.s
 class BotoMan:
+    """
+    Simple wrapper around boto3 API.
+    """
     bsm: BSM = attr.ib()
 
     @property

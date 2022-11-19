@@ -23,6 +23,7 @@ try:
         Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail,
         Retry, Catch,
     )
+    from .magic import LambdaTask
     from .choice_rule import (
         ChoiceRule,
         and_, or_, not_,
