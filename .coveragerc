@@ -5,6 +5,7 @@ omit =
     aws_stepfunction/_version.py
     aws_stepfunction/docs/*
     aws_stepfunction/actions/*
+    aws_stepfunction/better_boto/*
     aws_stepfunction/tests/*
     aws_stepfunction/boto.py
     aws_stepfunction/state_machine.py

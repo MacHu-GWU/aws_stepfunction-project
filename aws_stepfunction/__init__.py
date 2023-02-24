@@ -20,18 +20,29 @@ try:
     from .workflow import Workflow
     from .state import (
         State,
-        Task, Parallel, Map, Pass, Wait, Choice, Succeed, Fail,
-        Retry, Catch,
+        Task,
+        Parallel,
+        Map,
+        Pass,
+        Wait,
+        Choice,
+        Succeed,
+        Fail,
+        Retry,
+        Catch,
     )
     from .magic import LambdaTask
     from .choice_rule import (
         ChoiceRule,
-        and_, or_, not_,
+        and_,
+        or_,
+        not_,
         Var,
     )
     from . import actions
     from .actions import task_context
     from .state_machine import StateMachine
     from .constant import Constant
+    from . import better_boto
 except ImportError as e:  # pragma: no cover
     print(e)
