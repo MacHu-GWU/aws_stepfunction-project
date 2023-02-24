@@ -31,7 +31,6 @@ try:
         Retry,
         Catch,
     )
-    from .magic import LambdaTask
     from .choice_rule import (
         ChoiceRule,
         and_,
@@ -44,5 +43,11 @@ try:
     from .state_machine import StateMachine
     from .constant import Constant
     from . import better_boto
+except ImportError as e:  # pragma: no cover
+    print(e)
+
+
+try:
+    from .magic import LambdaTask
 except ImportError as e:  # pragma: no cover
     print(e)

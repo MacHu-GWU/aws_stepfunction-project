@@ -2,4 +2,7 @@
 pytest                                  # test framework
 pytest-cov                              # coverage test
 rich
+
 boto3
+s3pathlib>=1.0.10
+cottonformation>=0.0.8
