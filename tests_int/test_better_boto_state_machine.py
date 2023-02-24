@@ -15,11 +15,7 @@ from aws_stepfunction.better_boto.state_machine import (
     list_state_machines,
     wait_delete_state_machine_to_finish,
 )
-from aws_stepfunction.tests import (
-    run_cov_test,
-    bsm,
-    aws_console,
-)
+from aws_stepfunction.tests.boto_ses import bsm, aws_console
 
 
 def test_crud():
@@ -85,10 +81,17 @@ def test_crud():
     # )
 
     # list
-    state_machine_list = list_state_machines(bsm=bsm).filter(lambda state_machine: state_machine.name == state_machine_name).all()
+    state_machine_list = (
+        list_state_machines(bsm=bsm)
+        .filter(lambda state_machine: state_machine.name == state_machine_name)
+        .all()
+    )
     assert len(state_machine_list) == 1
 
+    aws_console.step_function.get_state_machine_execution()
 
 
 if __name__ == "__main__":
+    from aws_stepfunction.tests import run_cov_test
+
     run_cov_test(__file__, "aws_stepfunction.better_boto.state_machine", preview=False)
