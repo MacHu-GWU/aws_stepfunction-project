@@ -12,6 +12,7 @@ import attr
 import attr.validators as vs
 from pathlib_mate import Path
 from boto_session_manager import BotoSesManager, AwsServiceEnum
+from aws_console_url import AWSConsole
 
 from .state import Task, Parallel
 from .model import StepFunctionObject
@@ -60,10 +61,12 @@ class StateMachine(StepFunctionObject):
     )
     type: T.Optional[str] = attr.ib(default="STANDARD")
     logging_configuration: T.Optional[dict] = attr.ib(
-        default=None, metadata={C.ALIAS: "loggingConfiguration"},
+        default=None,
+        metadata={C.ALIAS: "loggingConfiguration"},
     )
     tracing_configuration: T.Optional[dict] = attr.ib(
-        default=None, metadata={C.ALIAS: "tracingConfiguration"},
+        default=None,
+        metadata={C.ALIAS: "tracingConfiguration"},
     )
     tags: T.Optional[dict] = attr.ib(
         default=None,
@@ -243,6 +246,7 @@ class StateMachine(StepFunctionObject):
     @logger.decorator
     def deploy(self, bsm: 'BotoSesManager') -> dict:
         self._deploy_magic(bsm)
+
         logger.info(
             f"deploy state machine to {self.get_state_machine_arn(bsm)!r} ..."
         )
@@ -422,8 +426,8 @@ class StateMachine(StepFunctionObject):
             )
             lbd_func = new_state.lambda_function()
             lbd_func.update_tags(
-                overwrite_existing=True,
-                hash=state.path_lbd_script.md5,
+                tags=dict(hash=state.path_lbd_script.md5),
+                mode_overwrite=True,
             )
             logger.info(f"declare Lambda Function {lbd_func.p_FunctionName}", 2)
             tpl.add(lbd_func)
@@ -449,8 +453,8 @@ class StateMachine(StepFunctionObject):
         """
         logger.info(msg)
         tpl.batch_tagging(
-            overwrite_existing=True,
-            CreatedBy="aws-stepfunction-python-sdk",
+            tags=dict(CreatedBy="aws-stepfunction-python-sdk"),
+            mode_overwrite=True,
         )
         env = cf.Env(bsm=bsm)
         boto_man = BotoMan(bsm=bsm)

@@ -2,5 +2,5 @@
 pathlib_mate                            # autopep8 your code
 twine                                   # make distribution archive
 wheel                                   # make pre-compiled distribution package
-s3pathlib>=1.0.10
-cottonformation>=0.0.8
+s3pathlib>=1.1.1
+cottonformation>=1.0.1

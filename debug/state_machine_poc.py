@@ -6,7 +6,7 @@ from aws_stepfunction.choice_rule import Var
 
 
 def make_task(id: str) -> Task:
-    return Task(ID=id, Resource="arn")
+    return Task(id=id)
 
 
 sm = Workflow()
