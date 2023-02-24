@@ -2,7 +2,7 @@
 
 import subprocess
 
-from .paths import dir_project_root, dir_htmlcov, bin_pytest
+from .paths import dir_project_root, dir_htmlcov, path_cov_index_html, bin_pytest
 
 
 def _run_cov_test(
@@ -14,7 +14,6 @@ def _run_cov_test(
 ):
     """
     A simple wrapper around pytest + coverage cli command.
-
     :param bin_pytest: the path to pytest executable
     :param script: the path to test script
     :param module: the dot notation to the python module you want to calculate
@@ -34,7 +33,7 @@ def _run_cov_test(
     subprocess.run(args)
 
 
-def run_cov_test(script: str, module: str):
+def run_cov_test(script: str, module: str, preview: bool=False):
     _run_cov_test(
         bin_pytest=f"{bin_pytest}",
         script=script,
@@ -42,3 +41,5 @@ def run_cov_test(script: str, module: str):
         root_dir=f"{dir_project_root}",
         htmlcov_dir=f"{dir_htmlcov}",
     )
+    if preview:
+        subprocess.run(["open", f"{path_cov_index_html}"])
